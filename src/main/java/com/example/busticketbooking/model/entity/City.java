@@ -1,10 +1,14 @@
 package com.example.busticketbooking.model.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "cities")
+@AllArgsConstructor
+@NoArgsConstructor
 @Getter
 public class City {
     @Id

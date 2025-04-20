@@ -1,11 +1,13 @@
 package com.example.busticketbooking.model.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
 @Entity
 @Table(name = "seats")
+@AllArgsConstructor
 @Getter
 @Setter
 public class Seat {
