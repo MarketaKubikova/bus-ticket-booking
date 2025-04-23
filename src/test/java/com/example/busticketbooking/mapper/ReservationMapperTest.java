@@ -1,8 +1,9 @@
 package com.example.busticketbooking.mapper;
 
-import com.example.busticketbooking.model.dto.ReservationRequestDto;
-import com.example.busticketbooking.model.dto.ReservationResponseDto;
-import com.example.busticketbooking.model.entity.Reservation;
+import com.example.busticketbooking.reservation.dto.ReservationRequest;
+import com.example.busticketbooking.reservation.dto.ReservationResponse;
+import com.example.busticketbooking.reservation.entity.Reservation;
+import com.example.busticketbooking.reservation.mapper.ReservationMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
@@ -25,7 +26,7 @@ class ReservationMapperTest {
         reservation.setSeatNumber(1);
         reservation.setPassengerEmail("test@test.com");
 
-        ReservationResponseDto responseDto = reservationMapper.toResponseDto(reservation);
+        ReservationResponse responseDto = reservationMapper.toResponseDto(reservation);
 
         assertNotNull(responseDto);
         assertEquals(1, responseDto.getSeatNumber());
@@ -37,7 +38,7 @@ class ReservationMapperTest {
 
     @Test
     void toEntityMapsRequestDtoToReservation() {
-        ReservationRequestDto requestDto = new ReservationRequestDto(1L, 1, "test@test.com");
+        ReservationRequest requestDto = new ReservationRequest(1L, 1, "test@test.com");
 
         Reservation reservation = reservationMapper.toEntity(requestDto);
 

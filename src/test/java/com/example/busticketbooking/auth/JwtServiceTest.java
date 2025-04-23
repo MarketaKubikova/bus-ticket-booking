@@ -1,5 +1,6 @@
 package com.example.busticketbooking.auth;
 
+import com.example.busticketbooking.common.security.JwtService;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

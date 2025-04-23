@@ -1,11 +1,12 @@
 package com.example.busticketbooking.auth;
 
-import com.example.busticketbooking.auth.dto.AuthResponse;
-import com.example.busticketbooking.auth.dto.LoginRequest;
-import com.example.busticketbooking.auth.dto.RegisterRequest;
-import com.example.busticketbooking.exception.GlobalExceptionHandler;
-import com.example.busticketbooking.exception.NotFoundException;
-import com.example.busticketbooking.user.UserService;
+import com.example.busticketbooking.common.exception.GlobalExceptionHandler;
+import com.example.busticketbooking.common.exception.NotFoundException;
+import com.example.busticketbooking.user.controller.AuthController;
+import com.example.busticketbooking.user.dto.AuthResponse;
+import com.example.busticketbooking.user.dto.LoginRequest;
+import com.example.busticketbooking.user.dto.RegisterRequest;
+import com.example.busticketbooking.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
