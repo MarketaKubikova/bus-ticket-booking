@@ -1,9 +1,10 @@
 package com.example.busticketbooking.controller;
 
-import com.example.busticketbooking.exception.GlobalExceptionHandler;
-import com.example.busticketbooking.model.dto.ReservationRequestDto;
-import com.example.busticketbooking.model.dto.ReservationResponseDto;
-import com.example.busticketbooking.service.ReservationService;
+import com.example.busticketbooking.common.exception.GlobalExceptionHandler;
+import com.example.busticketbooking.reservation.controller.ReservationController;
+import com.example.busticketbooking.reservation.dto.ReservationRequest;
+import com.example.busticketbooking.reservation.dto.ReservationResponse;
+import com.example.busticketbooking.reservation.service.ReservationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +43,7 @@ class ReservationControllerTest {
 
     @Test
     void createReservation_validRequest_returnsCreated() throws Exception {
-        when(reservationService.createReservation(any(ReservationRequestDto.class))).thenReturn(new ReservationResponseDto("Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0, 0), 1, "test@test.com"));
+        when(reservationService.createReservation(any(ReservationRequest.class))).thenReturn(new ReservationResponse("Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0, 0), 1, "test@test.com"));
 
         mockMvc.perform(MockMvcRequestBuilders.post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)

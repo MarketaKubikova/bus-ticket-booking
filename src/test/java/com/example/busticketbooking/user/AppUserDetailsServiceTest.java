@@ -1,6 +1,10 @@
 package com.example.busticketbooking.user;
 
-import com.example.busticketbooking.exception.NotFoundException;
+import com.example.busticketbooking.common.exception.NotFoundException;
+import com.example.busticketbooking.user.entity.AppUser;
+import com.example.busticketbooking.user.model.Role;
+import com.example.busticketbooking.user.repository.UserRepository;
+import com.example.busticketbooking.user.service.AppUserDetailsService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
