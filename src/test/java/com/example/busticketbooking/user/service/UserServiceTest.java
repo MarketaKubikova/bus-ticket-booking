@@ -1,14 +1,13 @@
-package com.example.busticketbooking.user;
+package com.example.busticketbooking.user.service;
 
 import com.example.busticketbooking.common.config.PasswordConfig;
-import com.example.busticketbooking.common.exception.UsernameAlreadyExistsException;
+import com.example.busticketbooking.common.exception.AlreadyExistsException;
 import com.example.busticketbooking.common.security.JwtService;
 import com.example.busticketbooking.user.dto.AuthResponse;
 import com.example.busticketbooking.user.dto.LoginRequest;
 import com.example.busticketbooking.user.dto.RegisterRequest;
 import com.example.busticketbooking.user.entity.AppUser;
 import com.example.busticketbooking.user.repository.UserRepository;
-import com.example.busticketbooking.user.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -68,7 +67,7 @@ class UserServiceTest {
 
         when(userRepository.existsByUsername("testuser")).thenReturn(true);
 
-        assertThrows(UsernameAlreadyExistsException.class, () -> userService.register(request));
+        assertThrows(AlreadyExistsException.class, () -> userService.register(request));
     }
 
     @Test
