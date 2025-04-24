@@ -1,9 +1,8 @@
-package com.example.busticketbooking.mapper;
+package com.example.busticketbooking.reservation.mapper;
 
 import com.example.busticketbooking.reservation.dto.ReservationRequest;
 import com.example.busticketbooking.reservation.dto.ReservationResponse;
 import com.example.busticketbooking.reservation.entity.Reservation;
-import com.example.busticketbooking.reservation.mapper.ReservationMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;

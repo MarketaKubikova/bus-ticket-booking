@@ -1,7 +1,6 @@
-package com.example.busticketbooking.controller;
+package com.example.busticketbooking.reservation.controller;
 
 import com.example.busticketbooking.common.exception.GlobalExceptionHandler;
-import com.example.busticketbooking.reservation.controller.ReservationController;
 import com.example.busticketbooking.reservation.dto.ReservationRequest;
 import com.example.busticketbooking.reservation.dto.ReservationResponse;
 import com.example.busticketbooking.reservation.service.ReservationService;

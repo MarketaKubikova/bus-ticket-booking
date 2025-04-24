@@ -1,7 +1,7 @@
 package com.example.busticketbooking.user.service;
 
 import com.example.busticketbooking.common.config.PasswordConfig;
-import com.example.busticketbooking.common.exception.UsernameAlreadyExistsException;
+import com.example.busticketbooking.common.exception.AlreadyExistsException;
 import com.example.busticketbooking.common.security.JwtService;
 import com.example.busticketbooking.user.dto.AuthResponse;
 import com.example.busticketbooking.user.dto.LoginRequest;
@@ -27,7 +27,7 @@ public class UserService {
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByUsername(request.username())) {
-            throw new UsernameAlreadyExistsException();
+            throw new AlreadyExistsException("User with username '" + request.username() + "' already exists");
         }
 
         AppUser user = new AppUser();
