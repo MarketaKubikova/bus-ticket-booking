@@ -2,7 +2,6 @@ package com.example.busticketbooking.bus.controller;
 
 import com.example.busticketbooking.bus.dto.BusRequest;
 import com.example.busticketbooking.bus.dto.BusResponse;
-import com.example.busticketbooking.bus.seat.dto.SeatResponse;
 import com.example.busticketbooking.bus.service.BusService;
 import com.example.busticketbooking.common.exception.AlreadyExistsException;
 import com.example.busticketbooking.common.exception.GlobalExceptionHandler;
@@ -21,9 +20,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -48,8 +44,8 @@ class BusControllerIntegrationTest {
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void getAllBuses_withAdminRole_shouldReturnBusList() throws Exception {
 
-        BusResponse bus1 = new BusResponse("101", 3, generateSeats(3));
-        BusResponse bus2 = new BusResponse("102", 5, generateSeats(5));
+        BusResponse bus1 = new BusResponse("101", 3);
+        BusResponse bus2 = new BusResponse("102", 5);
 
         when(busService.getAllBuses()).thenReturn(List.of(bus1, bus2));
 
@@ -58,12 +54,8 @@ class BusControllerIntegrationTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(2))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].busNumber").value("101"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].capacity").value(3))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].seats").isNotEmpty())
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].seats.length()").value(3))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[1].busNumber").value("102"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[1].capacity").value(5))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[1].seats").isNotEmpty())
-                .andExpect(MockMvcResultMatchers.jsonPath("$[1].seats.length()").value(5));
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].capacity").value(5));
     }
 
     @Test
@@ -84,16 +76,14 @@ class BusControllerIntegrationTest {
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void getBusById_withAdminRole_shouldReturnBusResponse() throws Exception {
 
-        BusResponse bus = new BusResponse("101", 3, generateSeats(3));
+        BusResponse bus = new BusResponse("101", 3);
 
         when(busService.getBusById(1L)).thenReturn(bus);
 
         mockMvc.perform(MockMvcRequestBuilders.get(BASE_URL + "/{id}", 1L))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.busNumber").value("101"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.capacity").value(3))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.seats").isNotEmpty())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.seats.length()").value(3));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.capacity").value(3));
     }
 
     @Test
@@ -125,7 +115,7 @@ class BusControllerIntegrationTest {
     void createBus_withAdminRole_shouldReturnBusResponse() throws Exception {
 
         BusRequest request = new BusRequest("103", 2);
-        BusResponse response = new BusResponse("103", 2, generateSeats(2));
+        BusResponse response = new BusResponse("103", 2);
 
         when(busService.createBus(request)).thenReturn(response);
 
@@ -134,9 +124,7 @@ class BusControllerIntegrationTest {
                         .content("{\"busNumber\": \"103\", \"capacity\": 2}"))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.busNumber").value("103"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.capacity").value(2))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.seats").isNotEmpty())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.seats.length()").value(2));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.capacity").value(2));
     }
 
     @Test
@@ -167,12 +155,5 @@ class BusControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"busNumber\": \"101\", \"capacity\": 3}"))
                 .andExpect(status().isUnauthorized());
-    }
-
-    private Set<SeatResponse> generateSeats(int capacity) {
-        return Stream.iterate(1, i -> i + 1)
-                .limit(capacity)
-                .map(i -> new SeatResponse(i, true))
-                .collect(Collectors.toSet());
     }
 }

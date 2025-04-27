@@ -8,6 +8,5 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface BusMapper {
     Bus toEntity(BusRequest dto);
-
     BusResponse toResponseDto(Bus entity);
 }

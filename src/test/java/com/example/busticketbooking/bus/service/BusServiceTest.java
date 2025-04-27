@@ -5,7 +5,6 @@ import com.example.busticketbooking.bus.dto.BusResponse;
 import com.example.busticketbooking.bus.entity.Bus;
 import com.example.busticketbooking.bus.mapper.BusMapper;
 import com.example.busticketbooking.bus.repository.BusRepository;
-import com.example.busticketbooking.bus.seat.dto.SeatResponse;
 import com.example.busticketbooking.common.exception.AlreadyExistsException;
 import com.example.busticketbooking.common.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
@@ -16,9 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -42,18 +38,16 @@ class BusServiceTest {
         Bus bus2 = new Bus("100", 10);
 
         when(busRepository.findAll()).thenReturn(List.of(bus1, bus2));
-        when(busMapper.toResponseDto(bus1)).thenReturn(new BusResponse("99", 5, generateSeats(5)));
-        when(busMapper.toResponseDto(bus2)).thenReturn(new BusResponse("100", 10, generateSeats(10)));
+        when(busMapper.toResponseDto(bus1)).thenReturn(new BusResponse("99", 5));
+        when(busMapper.toResponseDto(bus2)).thenReturn(new BusResponse("100", 10));
 
         List<BusResponse> result = busService.getAllBuses();
 
         assertThat(result).hasSize(2);
         assertThat(result.getFirst().busNumber()).isEqualTo("99");
         assertThat(result.getFirst().capacity()).isEqualTo(5);
-        assertThat(result.getFirst().seats()).hasSize(5);
         assertThat(result.getLast().busNumber()).isEqualTo("100");
         assertThat(result.getLast().capacity()).isEqualTo(10);
-        assertThat(result.getLast().seats()).hasSize(10);
     }
 
     @Test
@@ -61,13 +55,12 @@ class BusServiceTest {
         Bus bus = new Bus("99", 5);
 
         when(busRepository.findById(1L)).thenReturn(Optional.of(bus));
-        when(busMapper.toResponseDto(bus)).thenReturn(new BusResponse("99", 5, generateSeats(5)));
+        when(busMapper.toResponseDto(bus)).thenReturn(new BusResponse("99", 5));
 
         BusResponse result = busService.getBusById(1L);
 
         assertThat(result.busNumber()).isEqualTo("99");
         assertThat(result.capacity()).isEqualTo(5);
-        assertThat(result.seats()).hasSize(5);
     }
 
     @Test
@@ -80,7 +73,7 @@ class BusServiceTest {
     @Test
     void createBus_busDoesNotExist_createsBus() {
         Bus bus = new Bus("99", 5);
-        BusResponse response = new BusResponse("99", 5, generateSeats(5));
+        BusResponse response = new BusResponse("99", 5);
 
         when(busRepository.existsByBusNumber("99")).thenReturn(false);
         when(busRepository.save(bus)).thenReturn(bus);
@@ -91,7 +84,6 @@ class BusServiceTest {
 
         assertThat(result.busNumber()).isEqualTo("99");
         assertThat(result.capacity()).isEqualTo(5);
-        assertThat(result.seats()).hasSize(5);
     }
 
     @Test
@@ -100,12 +92,5 @@ class BusServiceTest {
         when(busRepository.existsByBusNumber("99")).thenReturn(true);
 
         assertThrows(AlreadyExistsException.class, () -> busService.createBus(request));
-    }
-
-    private Set<SeatResponse> generateSeats(int capacity) {
-        return Stream.iterate(1, i -> i + 1)
-                .limit(capacity)
-                .map(i -> new SeatResponse(i, true))
-                .collect(Collectors.toSet());
     }
 }

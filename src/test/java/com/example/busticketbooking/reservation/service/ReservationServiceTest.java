@@ -1,8 +1,6 @@
 package com.example.busticketbooking.reservation.service;
 
 import com.example.busticketbooking.bus.entity.Bus;
-import com.example.busticketbooking.bus.seat.entity.Seat;
-import com.example.busticketbooking.bus.seat.repository.SeatRepository;
 import com.example.busticketbooking.common.exception.NotFoundException;
 import com.example.busticketbooking.common.exception.SeatNotAvailableException;
 import com.example.busticketbooking.reservation.dto.ReservationRequest;
@@ -14,12 +12,16 @@ import com.example.busticketbooking.trip.entity.ScheduledTrip;
 import com.example.busticketbooking.trip.repository.ScheduledTripRepository;
 import com.example.busticketbooking.trip.route.city.entity.City;
 import com.example.busticketbooking.trip.route.entity.Route;
+import com.example.busticketbooking.trip.seat.entity.Seat;
+import com.example.busticketbooking.trip.seat.model.SeatStatus;
+import com.example.busticketbooking.trip.seat.repository.SeatRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -46,7 +48,7 @@ class ReservationServiceTest {
         ReservationRequest request = new ReservationRequest(1L, 1, "test@test.com");
         Bus bus = new Bus("99", 5);
         LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
-        ScheduledTrip scheduledTrip = new ScheduledTrip(1L, new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna")), bus, departureDateTime);
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), bus, departureDateTime);
         Reservation reservation = new Reservation(null, scheduledTrip, "test@test.com", 1, departureDateTime);
         Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", 1, departureDateTime);
         ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com");
@@ -54,7 +56,7 @@ class ReservationServiceTest {
         when(scheduledTripRepository.findById(1L)).thenReturn(Optional.of(scheduledTrip));
         when(reservationMapper.toEntity(request)).thenReturn(reservation);
         when(reservationRepository.save(reservation)).thenReturn(createdReservation);
-        when(seatRepository.save(any(Seat.class))).thenReturn(new Seat(1L, 1, bus, false));
+        when(seatRepository.save(any(Seat.class))).thenReturn(new Seat(1L, 1, SeatStatus.FREE, scheduledTrip));
         when(reservationMapper.toResponseDto(createdReservation)).thenReturn(response);
 
         ReservationResponse result = service.createReservation(request);
@@ -85,7 +87,7 @@ class ReservationServiceTest {
         ReservationRequest request = new ReservationRequest(1L, 99, "test@test.com");
         Bus bus = new Bus("99", 5);
         LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
-        ScheduledTrip scheduledTrip = new ScheduledTrip(1L, new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna")), bus, departureDateTime);
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), bus, departureDateTime);
 
         when(scheduledTripRepository.findById(1L)).thenReturn(Optional.of(scheduledTrip));
 

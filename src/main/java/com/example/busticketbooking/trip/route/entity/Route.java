@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.Duration;
+
 @Entity
 @Table(name = "routes")
 @AllArgsConstructor
@@ -19,4 +21,8 @@ public class Route {
     private City origin;
     @ManyToOne
     private City destination;
+    @Column(name = "distance_km")
+    private Double distance;
+    @Column(name = "duration")
+    private Duration duration;
 }
