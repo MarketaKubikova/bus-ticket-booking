@@ -7,7 +7,7 @@ import com.example.busticketbooking.trip.service.ScheduledTripService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatusCode;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -22,8 +22,6 @@ import java.util.List;
 @Validated
 @PreAuthorize("hasRole('ADMIN')")
 public class ScheduledTripController {
-    private static final HttpStatusCode HTTP_STATUS_CREATED = HttpStatusCode.valueOf(201);
-
     private final ScheduledTripService scheduledTripService;
 
     @GetMapping
@@ -39,6 +37,6 @@ public class ScheduledTripController {
     public ResponseEntity<List<ScheduledTripResponse>> createScheduledTrip(@RequestBody @Valid ScheduledTripRequest request) {
         List<ScheduledTripResponse> createdScheduledTrip = scheduledTripService.generateScheduledTripsByRule(request);
 
-        return ResponseEntity.status(HTTP_STATUS_CREATED).body(createdScheduledTrip);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdScheduledTrip);
     }
 }
