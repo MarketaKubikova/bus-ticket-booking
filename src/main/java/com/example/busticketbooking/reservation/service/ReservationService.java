@@ -1,7 +1,5 @@
 package com.example.busticketbooking.reservation.service;
 
-import com.example.busticketbooking.bus.seat.entity.Seat;
-import com.example.busticketbooking.bus.seat.repository.SeatRepository;
 import com.example.busticketbooking.common.exception.NotFoundException;
 import com.example.busticketbooking.common.exception.SeatNotAvailableException;
 import com.example.busticketbooking.reservation.dto.ReservationRequest;
@@ -11,6 +9,9 @@ import com.example.busticketbooking.reservation.mapper.ReservationMapper;
 import com.example.busticketbooking.reservation.repository.ReservationRepository;
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
 import com.example.busticketbooking.trip.repository.ScheduledTripRepository;
+import com.example.busticketbooking.trip.seat.entity.Seat;
+import com.example.busticketbooking.trip.seat.model.SeatStatus;
+import com.example.busticketbooking.trip.seat.repository.SeatRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,7 @@ public class ReservationService {
         ScheduledTrip scheduledTrip = scheduledTripRepository.findById(request.scheduledTripId())
                 .orElseThrow(() -> new NotFoundException("ScheduledTrip with ID '" + request.scheduledTripId() + "' not found"));
 
-        Set<Integer> availableSeats = scheduledTrip.getBus().getAvailableSeats().stream()
+        Set<Integer> availableSeats = scheduledTrip.getAvailableSeatsForReservation().stream()
                 .map(Seat::getSeatNumber)
                 .collect(Collectors.toSet());
 
@@ -51,12 +52,12 @@ public class ReservationService {
 
         log.info("Reservation with id '{}' successfully created at '{}'", result.getId(), result.getBookedAt());
 
-        result.getScheduledTrip().getBus().getSeats().stream()
+        result.getScheduledTrip().getSeats().stream()
                 .filter(seat -> seat.getSeatNumber() == request.seatNumber())
                 .findFirst()
                 .ifPresentOrElse(seat -> {
                             log.info("Change seat status to unavailable");
-                            seat.setAvailable(false);
+                            seat.setStatus(SeatStatus.RESERVED);
                             seatRepository.save(seat);
                         },
                         () -> {

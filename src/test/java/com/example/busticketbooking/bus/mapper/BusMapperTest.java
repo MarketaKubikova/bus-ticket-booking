@@ -26,7 +26,6 @@ class BusMapperTest {
         assertNotNull(response);
         assertEquals("101", response.busNumber());
         assertEquals(3, response.capacity());
-        assertEquals(3, response.seats().size());
     }
 
     @Test
@@ -44,6 +43,5 @@ class BusMapperTest {
         assertNotNull(response);
         assertEquals("102", response.busNumber());
         assertEquals(0, response.capacity());
-        assertEquals(0, response.seats().size());
     }
 }

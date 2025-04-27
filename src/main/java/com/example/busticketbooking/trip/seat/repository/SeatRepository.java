@@ -1,6 +1,6 @@
-package com.example.busticketbooking.bus.seat.repository;
+package com.example.busticketbooking.trip.seat.repository;
 
-import com.example.busticketbooking.bus.seat.entity.Seat;
+import com.example.busticketbooking.trip.seat.entity.Seat;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
