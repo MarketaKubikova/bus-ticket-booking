@@ -5,7 +5,7 @@ import com.example.busticketbooking.trip.route.city.dto.CityResponse;
 import com.example.busticketbooking.trip.route.city.entity.City;
 import org.mapstruct.Mapper;
 
-@Mapper
+@Mapper(componentModel = "spring")
 public interface CityMapper {
     City toEntity(CityRequest dto);
 

@@ -1,4 +1,4 @@
-package com.example.busticketbooking.trip.route.city;
+package com.example.busticketbooking.trip.route.city.controller;
 
 import com.example.busticketbooking.common.exception.AlreadyExistsException;
 import com.example.busticketbooking.common.exception.GlobalExceptionHandler;
