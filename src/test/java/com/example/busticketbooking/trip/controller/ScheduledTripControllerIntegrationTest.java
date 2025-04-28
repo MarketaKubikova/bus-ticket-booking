@@ -19,10 +19,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.util.List;
 import java.util.Set;
 
@@ -37,6 +34,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 class ScheduledTripControllerIntegrationTest {
     private static final String BASE_URL = "/api/scheduled-trips";
     private final ScheduledTripResponse scheduledTripResponse = new ScheduledTripResponse("101", "Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0), LocalDateTime.of(2025, 1, 1, 15, 0), Set.of(new SeatResponse(1, SeatStatus.FREE)));
+
     @MockitoBean
     private ScheduledTripService scheduledTripService;
     @Autowired
@@ -46,7 +44,7 @@ class ScheduledTripControllerIntegrationTest {
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void getScheduledTripsByRouteAndDepartureDate_withAdminRoleAndValidRequest_shouldReturnScheduledTripList() throws Exception {
         when(scheduledTripService.getScheduledTripsByRouteAndDepartureDate(
-                new RouteRequest("Prague", "Vienna"),
+                new RouteRequest("Prague", "Vienna", 334.0, Duration.ofHours(4)),
                 LocalDate.of(2025, 1, 1),
                 LocalDate.of(2025, 1, 5)))
                 .thenReturn(List.of(scheduledTripResponse));
@@ -55,7 +53,7 @@ class ScheduledTripControllerIntegrationTest {
                         .param("from", "2025-01-01")
                         .param("to", "2025-01-05")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"origin\":\"Prague\",\"destination\":\"Vienna\"}"))
+                        .content("{\"origin\":\"Prague\",\"destination\":\"Vienna\", \"distance\":334.0,\"duration\":\"PT4H\"}"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(1))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].busNumber").value("101"))

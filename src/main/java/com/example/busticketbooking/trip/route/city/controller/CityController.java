@@ -1,4 +1,4 @@
-package com.example.busticketbooking.trip.route.city;
+package com.example.busticketbooking.trip.route.city.controller;
 
 import com.example.busticketbooking.trip.route.city.dto.CityRequest;
 import com.example.busticketbooking.trip.route.city.dto.CityResponse;

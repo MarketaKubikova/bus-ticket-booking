@@ -8,5 +8,6 @@ import java.util.Optional;
 
 @Repository
 public interface RouteRepository extends JpaRepository<Route, Long> {
+    boolean existsByOriginNameAndDestinationName(String origin, String destination);
     Optional<Route> findByOriginNameAndDestinationName(String origin, String destination);
 }
