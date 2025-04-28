@@ -53,7 +53,7 @@ class ScheduledTripControllerIntegrationTest {
                         .param("from", "2025-01-01")
                         .param("to", "2025-01-05")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"origin\":\"Prague\",\"destination\":\"Vienna\"}"))
+                        .content("{\"origin\":\"Prague\",\"destination\":\"Vienna\", \"distance\":334.0,\"duration\":\"PT4H\"}"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(1))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].busNumber").value("101"))

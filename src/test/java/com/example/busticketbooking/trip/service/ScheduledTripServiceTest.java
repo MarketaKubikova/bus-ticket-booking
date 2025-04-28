@@ -54,8 +54,6 @@ class ScheduledTripServiceTest {
     void getScheduledTripsByRouteAndDepartureDate_validData_shouldReturnListOfTrips() {
         RouteRequest request = new RouteRequest("Prague", "Vienna", 334.0, Duration.ofHours(4));
 
-        when(busRepository.findByBusNumber("101")).thenReturn(Optional.of(new Bus("101", 5)));
-
         when(routeRepository.findByOriginNameAndDestinationName("Prague", "Vienna")).thenReturn(Optional.of(route));
         when(scheduledTripRepository.findAllByRouteAndDepartureDateBetween(route, LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31)))
                 .thenReturn(List.of(scheduledTrip1, scheduledTrip2, scheduledTrip3));

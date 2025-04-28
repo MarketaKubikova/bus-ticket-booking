@@ -39,6 +39,11 @@ public class ScheduledTripService {
 
         List<ScheduledTrip> result = scheduledTripRepository.findAllByRouteAndDepartureDateBetween(route, fromDate, toDate);
 
+        if (result.isEmpty()) {
+            log.error("No scheduled trips found for the given route and date range: {} to {}", fromDate, toDate);
+            throw new NotFoundException("No scheduled trips found for the given route and date range");
+        }
+
         return result.stream()
                 .map(scheduledTripMapper::toResponseDto)
                 .toList();
