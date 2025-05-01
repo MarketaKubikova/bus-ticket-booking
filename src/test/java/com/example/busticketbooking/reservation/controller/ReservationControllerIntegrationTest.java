@@ -4,6 +4,7 @@ import com.example.busticketbooking.reservation.dto.ReservationRequest;
 import com.example.busticketbooking.reservation.dto.ReservationResponse;
 import com.example.busticketbooking.reservation.service.ReservationService;
 import com.example.busticketbooking.shared.exception.GlobalExceptionHandler;
+import com.example.busticketbooking.user.entity.AppUser;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -21,6 +22,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -77,6 +80,33 @@ class ReservationControllerIntegrationTest {
     @Test
     void getUsersReservations_noUser_returnsForbidden() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get(BASE_URL))
+                .andExpect(MockMvcResultMatchers.status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "user")
+    void cancelReservation_validRequest_returnsNoContent() throws Exception {
+        doNothing().when(reservationService).cancelReservation(anyLong(), any(AppUser.class));
+
+        mockMvc.perform(MockMvcRequestBuilders.delete(BASE_URL)
+                        .param("reservationId", "1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "user")
+    void cancelReservation_invalidRequest_returnsBadRequest() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.delete(BASE_URL)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest());
+    }
+
+    @Test
+    void cancelReservation_noUser_returnsForbidden() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.delete(BASE_URL)
+                        .param("reservationId", "1")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isForbidden());
     }
 }

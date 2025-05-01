@@ -4,8 +4,10 @@ import com.example.busticketbooking.reservation.dto.ReservationRequest;
 import com.example.busticketbooking.reservation.dto.ReservationResponse;
 import com.example.busticketbooking.reservation.entity.Reservation;
 import com.example.busticketbooking.reservation.mapper.ReservationMapper;
+import com.example.busticketbooking.reservation.model.ReservationStatus;
 import com.example.busticketbooking.reservation.repository.ReservationRepository;
 import com.example.busticketbooking.shared.exception.BadRequestException;
+import com.example.busticketbooking.shared.exception.ForbiddenException;
 import com.example.busticketbooking.shared.exception.NotFoundException;
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
 import com.example.busticketbooking.trip.repository.ScheduledTripRepository;
@@ -23,6 +25,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -30,11 +33,14 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class ReservationService {
+    private static final int CANCELLATION_TIME_LIMIT_MINUTES = 30;
+
     private final ReservationRepository reservationRepository;
     private final ScheduledTripRepository scheduledTripRepository;
     private final SeatService seatService;
     private final ReservationMapper reservationMapper;
     private final UserRepository userRepository;
+    private final Clock clock;
 
     @Transactional
     public ReservationResponse createReservation(ReservationRequest request) {
@@ -46,7 +52,7 @@ public class ReservationService {
         Reservation reservation = new Reservation();
         reservation.setScheduledTrip(scheduledTrip);
         reservation.setSeat(seat);
-        reservation.setBookedAt(LocalDateTime.now());
+        reservation.setBookedAt(LocalDateTime.now(clock));
 
         AppUser currentUser = getCurrentAuthenticatedUser();
         if (currentUser != null) {
@@ -77,6 +83,30 @@ public class ReservationService {
         return reservations.stream()
                 .map(reservationMapper::toResponseDto)
                 .toList();
+    }
+
+    @Transactional
+    public void cancelReservation(Long reservationId, @NotNull AppUser user) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new NotFoundException("Reservation with ID '" + reservationId + "' not found"));
+
+        if (!reservation.getUser().equals(user)) {
+            log.error("User with ID '{}' is trying to cancel a reservation that does not belong to them", user.getId());
+            throw new ForbiddenException("You are not authorized to cancel this reservation");
+        }
+
+        if (!LocalDateTime.now(clock).isBefore(reservation.getScheduledTrip().getDepartureDateTime()
+                .minusMinutes(CANCELLATION_TIME_LIMIT_MINUTES))) {
+            log.error("User with ID '{}' is trying to cancel a reservation less than {} minutes before the trip", user.getId(), CANCELLATION_TIME_LIMIT_MINUTES);
+            throw new BadRequestException("Reservation cannot be canceled less than " + CANCELLATION_TIME_LIMIT_MINUTES + " minutes before the trip");
+        }
+
+        reservation.setStatus(ReservationStatus.CANCELED);
+        reservation.setCanceledAt(LocalDateTime.now(clock));
+        reservationRepository.save(reservation);
+        seatService.releaseSeat(reservation.getSeat());
+
+        log.info("Reservation with id '{}' successfully cancelled at {}", reservationId, reservation.getCanceledAt());
     }
 
     private AppUser getCurrentAuthenticatedUser() {

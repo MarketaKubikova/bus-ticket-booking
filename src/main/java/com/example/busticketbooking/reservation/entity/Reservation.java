@@ -1,5 +1,6 @@
 package com.example.busticketbooking.reservation.entity;
 
+import com.example.busticketbooking.reservation.model.ReservationStatus;
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
 import com.example.busticketbooking.trip.seat.entity.Seat;
 import com.example.busticketbooking.user.entity.AppUser;
@@ -32,4 +33,17 @@ public class Reservation {
     private LocalDateTime bookedAt;
     @ManyToOne
     private AppUser user;
+    @Enumerated(EnumType.STRING)
+    private ReservationStatus status = ReservationStatus.ACTIVE;
+    @Column(name = "canceled_at")
+    private LocalDateTime canceledAt = null;
+
+    public Reservation(Long id, ScheduledTrip scheduledTrip, String passengerEmail, Seat seat, AppUser user) {
+        this.id = id;
+        this.scheduledTrip = scheduledTrip;
+        this.passengerEmail = passengerEmail;
+        this.seat = seat;
+        this.bookedAt = LocalDateTime.now();
+        this.user = user;
+    }
 }

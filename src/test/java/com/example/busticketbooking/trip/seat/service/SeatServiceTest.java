@@ -61,4 +61,17 @@ class SeatServiceTest {
 
         assertThrows(NotFoundException.class, () -> seatService.reserveSeat(5, scheduledTrip));
     }
+
+    @Test
+    void releaseSeat_validSeat_shouldUpdateSeatStatus() {
+        ScheduledTrip scheduledTrip = new ScheduledTrip();
+        Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip);
+        scheduledTrip.setSeats(Set.of(seat));
+
+        when(seatRepository.save(seat)).thenReturn(seat);
+
+        seatService.releaseSeat(seat);
+
+        assertThat(seat.getStatus()).isEqualTo(SeatStatus.FREE);
+    }
 }

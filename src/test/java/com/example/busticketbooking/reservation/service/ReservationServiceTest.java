@@ -5,9 +5,13 @@ import com.example.busticketbooking.reservation.dto.ReservationRequest;
 import com.example.busticketbooking.reservation.dto.ReservationResponse;
 import com.example.busticketbooking.reservation.entity.Reservation;
 import com.example.busticketbooking.reservation.mapper.ReservationMapper;
+import com.example.busticketbooking.reservation.model.ReservationStatus;
 import com.example.busticketbooking.reservation.repository.ReservationRepository;
+import com.example.busticketbooking.shared.exception.BadRequestException;
+import com.example.busticketbooking.shared.exception.ForbiddenException;
 import com.example.busticketbooking.shared.exception.NotFoundException;
 import com.example.busticketbooking.shared.exception.SeatNotAvailableException;
+import com.example.busticketbooking.shared.util.Constant;
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
 import com.example.busticketbooking.trip.repository.ScheduledTripRepository;
 import com.example.busticketbooking.trip.route.city.entity.City;
@@ -28,7 +32,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashSet;
@@ -56,6 +62,8 @@ class ReservationServiceTest {
     private Authentication authentication;
     @Mock
     private SecurityContext securityContext;
+    @Mock
+    private Clock clock;
     @InjectMocks
     private ReservationService service;
 
@@ -71,9 +79,13 @@ class ReservationServiceTest {
         LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
         ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), bus, departureDateTime);
         Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip);
-        Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, departureDateTime, null);
+        Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, departureDateTime, null, ReservationStatus.ACTIVE, null);
         ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com");
+        LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
+        Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
 
+        when(clock.instant()).thenReturn(instant);
+        when(clock.getZone()).thenReturn(Constant.ZONE_PRAGUE);
         when(scheduledTripRepository.findById(1L)).thenReturn(Optional.of(scheduledTrip));
         when(seatService.reserveSeat(request.seatNumber(), scheduledTrip)).thenReturn(seat);
         when(reservationRepository.save(any(Reservation.class))).thenReturn(createdReservation);
@@ -100,9 +112,13 @@ class ReservationServiceTest {
         LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
         ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), bus, departureDateTime);
         Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip);
-        Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, departureDateTime, null);
+        Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, null);
         ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com");
+        LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
+        Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
 
+        when(clock.instant()).thenReturn(instant);
+        when(clock.getZone()).thenReturn(Constant.ZONE_PRAGUE);
         when(authentication.getName()).thenReturn(user.getUsername());
         when(authentication.isAuthenticated()).thenReturn(true);
         when(securityContext.getAuthentication()).thenReturn(authentication);
@@ -168,6 +184,80 @@ class ReservationServiceTest {
         when(reservationRepository.findAllByUser(user)).thenReturn(Collections.emptyList());
 
         assertThrows(NotFoundException.class, () -> service.getUsersReservations(user));
+    }
+
+    @Test
+    void cancelReservation_validRequest_reservationCancelled() {
+        AppUser user = createUser();
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 11, 0));
+        Reservation reservation = new Reservation();
+        reservation.setId(1L);
+        reservation.setUser(user);
+        reservation.setScheduledTrip(scheduledTrip);
+        reservation.setStatus(ReservationStatus.ACTIVE);
+        reservation.setSeat(new Seat(1, scheduledTrip));
+        LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 8, 0);
+        Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
+
+        when(clock.instant()).thenReturn(instant);
+        when(clock.getZone()).thenReturn(Constant.ZONE_PRAGUE);
+        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+        when(reservationRepository.save(reservation)).thenReturn(reservation);
+        doNothing().when(seatService).releaseSeat(reservation.getSeat());
+
+        service.cancelReservation(1L, user);
+
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.CANCELED);
+        assertThat(reservation.getSeat().getStatus()).isEqualTo(SeatStatus.FREE);
+        assertThat(reservation.getCanceledAt()).isEqualTo(LocalDateTime.of(2025, 1, 1, 8, 0));
+        verify(reservationRepository, times(1)).findById(1L);
+        verify(reservationRepository, times(1)).save(reservation);
+        verify(seatService, times(1)).releaseSeat(reservation.getSeat());
+    }
+
+    @Test
+    void cancelReservation_reservationNotFound_shouldThrowException() {
+        AppUser user = createUser();
+
+        when(reservationRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> service.cancelReservation(1L, user));
+    }
+
+    @Test
+    void cancelReservation_userNotAuthorized_shouldThrowException() {
+        AppUser user = createUser();
+        AppUser anotherUser = new AppUser();
+        anotherUser.setId(2L);
+        anotherUser.setUsername("anotherUser");
+
+        Reservation reservation = new Reservation();
+        reservation.setId(1L);
+        reservation.setUser(anotherUser);
+
+        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+
+        assertThrows(ForbiddenException.class, () -> service.cancelReservation(1L, user));
+    }
+
+    @Test
+    void cancelReservation_tooLateForCancellation_shouldThrowException() {
+        AppUser user = createUser();
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 11, 0));
+        Reservation reservation = new Reservation();
+        reservation.setId(1L);
+        reservation.setUser(user);
+        reservation.setScheduledTrip(scheduledTrip);
+        reservation.setStatus(ReservationStatus.ACTIVE);
+        reservation.setSeat(new Seat(1, scheduledTrip));
+        LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
+        Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
+
+        when(clock.instant()).thenReturn(instant);
+        when(clock.getZone()).thenReturn(Constant.ZONE_PRAGUE);
+        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+
+        assertThrows(BadRequestException.class, () -> service.cancelReservation(1L, user));
     }
 
     private AppUser createUser() {

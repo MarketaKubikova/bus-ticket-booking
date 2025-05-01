@@ -51,4 +51,10 @@ public class ScheduledTrip {
                 .filter(Seat::isSeatAvailableForReservation)
                 .collect(Collectors.toSet());
     }
+
+    @Override
+    public String toString() {
+        return "scheduled trip from " + route.getOrigin().getName() + " to " + route.getDestination().getName() +
+                " on " + departureDateTime;
+    }
 }
