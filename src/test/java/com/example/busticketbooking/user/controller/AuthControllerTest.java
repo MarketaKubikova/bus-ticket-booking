@@ -1,7 +1,7 @@
 package com.example.busticketbooking.user.controller;
 
-import com.example.busticketbooking.common.exception.GlobalExceptionHandler;
-import com.example.busticketbooking.common.exception.NotFoundException;
+import com.example.busticketbooking.shared.exception.GlobalExceptionHandler;
+import com.example.busticketbooking.shared.exception.NotFoundException;
 import com.example.busticketbooking.user.dto.AuthResponse;
 import com.example.busticketbooking.user.dto.LoginRequest;
 import com.example.busticketbooking.user.dto.RegisterRequest;

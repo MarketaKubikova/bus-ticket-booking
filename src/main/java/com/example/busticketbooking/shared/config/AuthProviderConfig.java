@@ -1,4 +1,4 @@
-package com.example.busticketbooking.common.config;
+package com.example.busticketbooking.shared.config;
 
 import com.example.busticketbooking.user.service.AppUserDetailsService;
 import lombok.RequiredArgsConstructor;

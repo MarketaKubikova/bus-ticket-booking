@@ -2,9 +2,9 @@ package com.example.busticketbooking.trip.service;
 
 import com.example.busticketbooking.bus.entity.Bus;
 import com.example.busticketbooking.bus.repository.BusRepository;
-import com.example.busticketbooking.common.exception.NoTripCreatedException;
-import com.example.busticketbooking.common.exception.NotFoundException;
-import com.example.busticketbooking.common.exception.RouteNotFoundException;
+import com.example.busticketbooking.shared.exception.NoTripCreatedException;
+import com.example.busticketbooking.shared.exception.NotFoundException;
+import com.example.busticketbooking.shared.exception.RouteNotFoundException;
 import com.example.busticketbooking.trip.dto.ScheduledTripRequest;
 import com.example.busticketbooking.trip.dto.ScheduledTripResponse;
 import com.example.busticketbooking.trip.entity.ScheduledTrip;

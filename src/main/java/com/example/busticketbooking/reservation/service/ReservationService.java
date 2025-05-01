@@ -1,12 +1,12 @@
 package com.example.busticketbooking.reservation.service;
 
-import com.example.busticketbooking.common.exception.BadRequestException;
-import com.example.busticketbooking.common.exception.NotFoundException;
 import com.example.busticketbooking.reservation.dto.ReservationRequest;
 import com.example.busticketbooking.reservation.dto.ReservationResponse;
 import com.example.busticketbooking.reservation.entity.Reservation;
 import com.example.busticketbooking.reservation.mapper.ReservationMapper;
 import com.example.busticketbooking.reservation.repository.ReservationRepository;
+import com.example.busticketbooking.shared.exception.BadRequestException;
+import com.example.busticketbooking.shared.exception.NotFoundException;
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
 import com.example.busticketbooking.trip.repository.ScheduledTripRepository;
 import com.example.busticketbooking.trip.seat.entity.Seat;

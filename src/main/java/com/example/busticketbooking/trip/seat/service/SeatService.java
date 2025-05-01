@@ -1,7 +1,7 @@
 package com.example.busticketbooking.trip.seat.service;
 
-import com.example.busticketbooking.common.exception.NotFoundException;
-import com.example.busticketbooking.common.exception.SeatNotAvailableException;
+import com.example.busticketbooking.shared.exception.NotFoundException;
+import com.example.busticketbooking.shared.exception.SeatNotAvailableException;
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
 import com.example.busticketbooking.trip.seat.entity.Seat;
 import com.example.busticketbooking.trip.seat.model.SeatStatus;

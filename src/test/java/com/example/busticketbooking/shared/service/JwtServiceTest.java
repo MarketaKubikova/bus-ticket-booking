@@ -1,6 +1,6 @@
-package com.example.busticketbooking.common.service;
+package com.example.busticketbooking.shared.service;
 
-import com.example.busticketbooking.common.security.JwtService;
+import com.example.busticketbooking.shared.security.JwtService;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

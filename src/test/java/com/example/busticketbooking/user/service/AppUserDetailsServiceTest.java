@@ -1,6 +1,6 @@
 package com.example.busticketbooking.user.service;
 
-import com.example.busticketbooking.common.exception.NotFoundException;
+import com.example.busticketbooking.shared.exception.NotFoundException;
 import com.example.busticketbooking.user.entity.AppUser;
 import com.example.busticketbooking.user.model.Role;
 import com.example.busticketbooking.user.repository.UserRepository;

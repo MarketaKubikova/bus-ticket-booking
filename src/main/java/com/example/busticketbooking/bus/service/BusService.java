@@ -5,8 +5,8 @@ import com.example.busticketbooking.bus.dto.BusResponse;
 import com.example.busticketbooking.bus.entity.Bus;
 import com.example.busticketbooking.bus.mapper.BusMapper;
 import com.example.busticketbooking.bus.repository.BusRepository;
-import com.example.busticketbooking.common.exception.AlreadyExistsException;
-import com.example.busticketbooking.common.exception.NotFoundException;
+import com.example.busticketbooking.shared.exception.AlreadyExistsException;
+import com.example.busticketbooking.shared.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

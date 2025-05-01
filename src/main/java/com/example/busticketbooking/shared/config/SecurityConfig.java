@@ -1,6 +1,6 @@
-package com.example.busticketbooking.common.config;
+package com.example.busticketbooking.shared.config;
 
-import com.example.busticketbooking.common.security.JwtAuthenticationFilter;
+import com.example.busticketbooking.shared.security.JwtAuthenticationFilter;
 import com.example.busticketbooking.user.service.AppUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

@@ -1,7 +1,7 @@
 package com.example.busticketbooking.trip.route.service;
 
-import com.example.busticketbooking.common.exception.AlreadyExistsException;
-import com.example.busticketbooking.common.exception.NotFoundException;
+import com.example.busticketbooking.shared.exception.AlreadyExistsException;
+import com.example.busticketbooking.shared.exception.NotFoundException;
 import com.example.busticketbooking.trip.route.dto.RouteRequest;
 import com.example.busticketbooking.trip.route.dto.RouteResponse;
 import com.example.busticketbooking.trip.route.entity.Route;
