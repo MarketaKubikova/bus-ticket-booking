@@ -1,6 +1,6 @@
 package com.example.busticketbooking.user.service;
 
-import com.example.busticketbooking.common.exception.NotFoundException;
+import com.example.busticketbooking.shared.exception.NotFoundException;
 import com.example.busticketbooking.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;

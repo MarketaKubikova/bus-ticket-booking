@@ -1,4 +1,4 @@
-package com.example.busticketbooking.common.exception;
+package com.example.busticketbooking.shared.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

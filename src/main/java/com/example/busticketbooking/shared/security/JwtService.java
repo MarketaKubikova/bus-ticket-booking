@@ -1,4 +1,4 @@
-package com.example.busticketbooking.common.security;
+package com.example.busticketbooking.shared.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;

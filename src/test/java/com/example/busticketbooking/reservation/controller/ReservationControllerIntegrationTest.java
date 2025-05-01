@@ -1,9 +1,9 @@
 package com.example.busticketbooking.reservation.controller;
 
-import com.example.busticketbooking.common.exception.GlobalExceptionHandler;
 import com.example.busticketbooking.reservation.dto.ReservationRequest;
 import com.example.busticketbooking.reservation.dto.ReservationResponse;
 import com.example.busticketbooking.reservation.service.ReservationService;
+import com.example.busticketbooking.shared.exception.GlobalExceptionHandler;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

@@ -1,6 +1,6 @@
 package com.example.busticketbooking.trip.controller;
 
-import com.example.busticketbooking.common.exception.GlobalExceptionHandler;
+import com.example.busticketbooking.shared.exception.GlobalExceptionHandler;
 import com.example.busticketbooking.trip.dto.ScheduledTripRequest;
 import com.example.busticketbooking.trip.dto.ScheduledTripResponse;
 import com.example.busticketbooking.trip.route.dto.RouteRequest;

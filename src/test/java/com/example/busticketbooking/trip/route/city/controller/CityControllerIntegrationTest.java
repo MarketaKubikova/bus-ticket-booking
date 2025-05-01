@@ -1,8 +1,8 @@
 package com.example.busticketbooking.trip.route.city.controller;
 
-import com.example.busticketbooking.common.exception.AlreadyExistsException;
-import com.example.busticketbooking.common.exception.GlobalExceptionHandler;
-import com.example.busticketbooking.common.exception.NotFoundException;
+import com.example.busticketbooking.shared.exception.AlreadyExistsException;
+import com.example.busticketbooking.shared.exception.GlobalExceptionHandler;
+import com.example.busticketbooking.shared.exception.NotFoundException;
 import com.example.busticketbooking.trip.route.city.dto.CityResponse;
 import com.example.busticketbooking.trip.route.city.service.CityService;
 import org.junit.jupiter.api.Test;

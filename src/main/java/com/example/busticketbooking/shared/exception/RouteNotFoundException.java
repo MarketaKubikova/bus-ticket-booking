@@ -1,4 +1,4 @@
-package com.example.busticketbooking.common.exception;
+package com.example.busticketbooking.shared.exception;
 
 public class RouteNotFoundException extends NotFoundException {
     public RouteNotFoundException(String origin, String destination) {
