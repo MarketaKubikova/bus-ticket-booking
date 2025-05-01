@@ -1,6 +1,8 @@
 package com.example.busticketbooking.reservation.entity;
 
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
+import com.example.busticketbooking.trip.seat.entity.Seat;
+import com.example.busticketbooking.user.entity.AppUser;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,8 +26,10 @@ public class Reservation {
     private ScheduledTrip scheduledTrip;
     @Column(name = "passenger_email")
     private String passengerEmail;
-    @Column(name = "seat_number")
-    private int seatNumber;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    private Seat seat;
     @Column(name = "booked_at")
     private LocalDateTime bookedAt;
+    @ManyToOne
+    private AppUser user;
 }

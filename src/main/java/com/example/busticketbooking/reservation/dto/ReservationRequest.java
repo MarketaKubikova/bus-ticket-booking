@@ -1,17 +1,19 @@
 package com.example.busticketbooking.reservation.dto;
 
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 public record ReservationRequest(
-        Long scheduledTripId,
-        int seatNumber,
         @NotNull
-        @NotBlank
-        @NotEmpty
+        Long scheduledTripId,
+        @NotNull
+        @Min(1)
+        int seatNumber,
         @Email
         String passengerEmail
 ) {
+    public ReservationRequest(Long scheduledTripId, int seatNumber) {
+        this(scheduledTripId, seatNumber, "");
+    }
 }

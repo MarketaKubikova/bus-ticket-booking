@@ -4,41 +4,37 @@ import com.example.busticketbooking.common.exception.GlobalExceptionHandler;
 import com.example.busticketbooking.reservation.dto.ReservationRequest;
 import com.example.busticketbooking.reservation.dto.ReservationResponse;
 import com.example.busticketbooking.reservation.service.ReservationService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureMockMvc
 @Import(GlobalExceptionHandler.class)
-class ReservationControllerTest {
+@ActiveProfiles("test")
+class ReservationControllerIntegrationTest {
     private static final String BASE_URL = "/api/reservations";
 
-    private MockMvc mockMvc;
-    @Mock
+    @MockitoBean
     private ReservationService reservationService;
-    @InjectMocks
-    private ReservationController controller;
 
-    @BeforeEach
-    void setup() {
-        mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setControllerAdvice(new GlobalExceptionHandler())
-                .build();
-    }
+    @Autowired
+    private MockMvc mockMvc;
 
     @Test
     void createReservation_validRequest_returnsCreated() throws Exception {
@@ -59,7 +55,28 @@ class ReservationControllerTest {
     void createReservation_invalidRequest_returnsBadRequest() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"scheduledTripId\": 1, \"seatNumber\": 1, \"passengerEmail\": null}"))
+                        .content("{\"scheduledTripId\": 1, \"seatNumber\": null, \"passengerEmail\": null}"))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = "user")
+    void getUsersReservations_validRequest_returnsReservation() throws Exception {
+        when(reservationService.getUsersReservations(any())).thenReturn(List.of(new ReservationResponse("Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0), 1, "test@test.com")));
+
+        mockMvc.perform(MockMvcRequestBuilders.get(BASE_URL)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].origin").value("Prague"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].destination").value("Vienna"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].departureDateTime").value("2025-01-01T11:00:00"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].seatNumber").value(1))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].passengerEmail").value("test@test.com"));
+    }
+
+    @Test
+    void getUsersReservations_noUser_returnsForbidden() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get(BASE_URL))
+                .andExpect(MockMvcResultMatchers.status().isForbidden());
     }
 }

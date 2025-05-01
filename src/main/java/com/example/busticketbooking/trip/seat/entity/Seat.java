@@ -5,11 +5,13 @@ import com.example.busticketbooking.trip.seat.model.SeatStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
 @Table(name = "seats")
 @AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
 public class Seat {
@@ -24,9 +26,6 @@ public class Seat {
     @ManyToOne
     @JoinColumn(name = "scheduled_trip_id", nullable = false)
     private ScheduledTrip scheduledTrip;
-
-    protected Seat() {
-    }
 
     public Seat(int seatNumber, ScheduledTrip scheduledTrip) {
         this.seatNumber = seatNumber;

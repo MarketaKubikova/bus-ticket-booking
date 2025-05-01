@@ -1,7 +1,7 @@
 package com.example.busticketbooking.reservation.service;
 
+import com.example.busticketbooking.common.exception.BadRequestException;
 import com.example.busticketbooking.common.exception.NotFoundException;
-import com.example.busticketbooking.common.exception.SeatNotAvailableException;
 import com.example.busticketbooking.reservation.dto.ReservationRequest;
 import com.example.busticketbooking.reservation.dto.ReservationResponse;
 import com.example.busticketbooking.reservation.entity.Reservation;
@@ -10,16 +10,21 @@ import com.example.busticketbooking.reservation.repository.ReservationRepository
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
 import com.example.busticketbooking.trip.repository.ScheduledTripRepository;
 import com.example.busticketbooking.trip.seat.entity.Seat;
-import com.example.busticketbooking.trip.seat.model.SeatStatus;
-import com.example.busticketbooking.trip.seat.repository.SeatRepository;
+import com.example.busticketbooking.trip.seat.service.SeatService;
+import com.example.busticketbooking.user.entity.AppUser;
+import com.example.busticketbooking.user.repository.UserRepository;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -27,49 +32,62 @@ import java.util.stream.Collectors;
 public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final ScheduledTripRepository scheduledTripRepository;
-    private final SeatRepository seatRepository;
+    private final SeatService seatService;
     private final ReservationMapper reservationMapper;
+    private final UserRepository userRepository;
 
     @Transactional
     public ReservationResponse createReservation(ReservationRequest request) {
         ScheduledTrip scheduledTrip = scheduledTripRepository.findById(request.scheduledTripId())
                 .orElseThrow(() -> new NotFoundException("ScheduledTrip with ID '" + request.scheduledTripId() + "' not found"));
 
-        Set<Integer> availableSeats = scheduledTrip.getAvailableSeatsForReservation().stream()
-                .map(Seat::getSeatNumber)
-                .collect(Collectors.toSet());
+        Seat seat = seatService.reserveSeat(request.seatNumber(), scheduledTrip);
 
-        if (!availableSeats.contains(request.seatNumber())) {
-            throw new SeatNotAvailableException(request.seatNumber());
-        }
-
-        Reservation reservation = reservationMapper.toEntity(request);
+        Reservation reservation = new Reservation();
         reservation.setScheduledTrip(scheduledTrip);
-        reservation.setSeatNumber(request.seatNumber());
+        reservation.setSeat(seat);
         reservation.setBookedAt(LocalDateTime.now());
 
-        Reservation result = reservationRepository.save(reservation);
+        AppUser currentUser = getCurrentAuthenticatedUser();
+        if (currentUser != null) {
+            reservation.setUser(currentUser);
+            reservation.setPassengerEmail(currentUser.getEmail());
+        } else {
+            if (request.passengerEmail() == null || request.passengerEmail().isBlank()) {
+                throw new BadRequestException("Email must be provided for anonymous reservation");
+            }
+            reservation.setUser(null);
+            reservation.setPassengerEmail(request.passengerEmail());
+        }
 
-        log.info("Reservation with id '{}' successfully created at '{}'", result.getId(), result.getBookedAt());
+        Reservation savedReservation = reservationRepository.save(reservation);
 
-        result.getScheduledTrip().getSeats().stream()
-                .filter(seat -> seat.getSeatNumber() == request.seatNumber())
-                .findFirst()
-                .ifPresentOrElse(seat -> {
-                            log.info("Change seat status to unavailable");
-                            seat.setStatus(SeatStatus.RESERVED);
-                            seatRepository.save(seat);
-                        },
-                        () -> {
-                            throw new NotFoundException("Seat with number '" + request.seatNumber() + "' not found");
-                        });
+        log.info("Reservation with id '{}' successfully created at '{}'", savedReservation.getId(), savedReservation.getBookedAt());
 
-        ReservationResponse response = reservationMapper.toResponseDto(result);
-        response.setOrigin(result.getScheduledTrip().getRoute().getOrigin().getName());
-        response.setDestination(result.getScheduledTrip().getRoute().getDestination().getName());
-        response.setDepartureDateTime(result.getScheduledTrip().getDepartureDateTime());
+        return reservationMapper.toResponseDto(savedReservation);
+    }
 
-        log.info("Returning reservation response for reservation with id '{}'", result.getId());
-        return response;
+    public List<ReservationResponse> getUsersReservations(@NotNull AppUser user) {
+        List<Reservation> reservations = reservationRepository.findAllByUser(user);
+
+        if (reservations.isEmpty()) {
+            throw new NotFoundException("No reservations found for user with ID '" + user.getId() + "'");
+        }
+
+        return reservations.stream()
+                .map(reservationMapper::toResponseDto)
+                .toList();
+    }
+
+    private AppUser getCurrentAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            return null;
+        }
+        String username = authentication.getName();
+
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 }
