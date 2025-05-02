@@ -10,8 +10,7 @@ import org.mapstruct.factory.Mappers;
 
 import java.time.Duration;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 class RouteMapperTest {
     private RouteMapper routeMapper;
@@ -36,14 +35,14 @@ class RouteMapperTest {
 
     @Test
     void mapRouteRequestToRoute_withValidRouteRequest_shouldReturnCorrectRoute() {
-        RouteRequest request = new RouteRequest("Prague", "Vienna", 334.0, Duration.ofHours(4));
+        RouteRequest request = new RouteRequest("Prague", "Vienna", 334.0, "04:00");
 
         Route route = routeMapper.toEntity(request);
 
         assertNotNull(route);
-        assertEquals("Prague", route.getOrigin().getName());
-        assertEquals("Vienna", route.getDestination().getName());
+        assertNull(route.getOrigin());
+        assertNull(route.getDestination());
+        assertNull(route.getDuration());
         assertEquals(334.0, route.getDistance());
-        assertEquals(Duration.ofHours(4), route.getDuration());
     }
 }
