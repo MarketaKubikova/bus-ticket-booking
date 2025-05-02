@@ -12,13 +12,6 @@ import java.util.List;
 @Repository
 public interface ScheduledTripRepository extends JpaRepository<ScheduledTrip, Long> {
 
-    @Query(value = """
-            SELECT st FROM ScheduledTrip st
-            JOIN st.route r
-            WHERE r.origin.name = :originName
-            AND r.destination.name = :destinationName
-            AND st.departureDateTime BETWEEN :fromDate AND :toDate
-            ORDER BY st.departureDateTime ASC
-            """)
-    List<ScheduledTrip> findAllByRouteAndDepartureDateBetween(Route route, LocalDate fromDate, LocalDate toDate);
+    @Query("SELECT st FROM ScheduledTrip st WHERE st.route = :route AND DATE(st.departureDateTime) = :date ORDER BY st.departureDateTime ASC")
+    List<ScheduledTrip> findAllByRouteAndDepartureDate(Route route, LocalDate date);
 }

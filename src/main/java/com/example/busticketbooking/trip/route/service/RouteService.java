@@ -2,6 +2,8 @@ package com.example.busticketbooking.trip.route.service;
 
 import com.example.busticketbooking.shared.exception.AlreadyExistsException;
 import com.example.busticketbooking.shared.exception.NotFoundException;
+import com.example.busticketbooking.trip.route.city.entity.City;
+import com.example.busticketbooking.trip.route.city.repository.CityRepository;
 import com.example.busticketbooking.trip.route.dto.RouteRequest;
 import com.example.busticketbooking.trip.route.dto.RouteResponse;
 import com.example.busticketbooking.trip.route.entity.Route;
@@ -11,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.List;
 
 @Service
@@ -18,6 +21,7 @@ import java.util.List;
 @Slf4j
 public class RouteService {
     private final RouteRepository routeRepository;
+    private final CityRepository cityRepository;
     private final RouteMapper routeMapper;
 
     public RouteResponse createRoute(RouteRequest request) {
@@ -26,7 +30,17 @@ public class RouteService {
             throw new AlreadyExistsException("Route from " + request.origin() + " to " + request.destination() + " already exists");
         }
 
-        Route savedRoute = routeRepository.save(routeMapper.toEntity(request));
+        City origin = cityRepository.findByName(request.origin())
+                .orElseGet(() -> cityRepository.save(new City(request.origin())));
+
+        City destination = cityRepository.findByName(request.destination())
+                .orElseGet(() -> cityRepository.save(new City(request.destination())));
+
+        Route route = routeMapper.toEntity(request);
+        route.setOrigin(origin);
+        route.setDestination(destination);
+        route.setDuration(Duration.parse("PT" + request.duration().replace(":", "H") + "M"));
+        Route savedRoute = routeRepository.save(route);
         log.info("New route from {} to {} successfully saved", request.origin(), request.destination());
 
         return routeMapper.toResponseDto(savedRoute);

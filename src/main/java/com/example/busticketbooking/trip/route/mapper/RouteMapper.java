@@ -8,8 +8,9 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface RouteMapper {
-    @Mapping(target = "origin.name", source = "dto.origin")
-    @Mapping(target = "destination.name", source = "dto.destination")
+    @Mapping(target = "origin", ignore = true)
+    @Mapping(target = "destination", ignore = true)
+    @Mapping(target = "duration", ignore = true)
     Route toEntity(RouteRequest dto);
 
     @Mapping(target = "origin", source = "entity.origin.name")

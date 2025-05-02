@@ -46,7 +46,7 @@ class AuthControllerTest {
 
         mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"username\": \"testuser\", \"password\": \"password\"}"))
+                        .content("{\"email\": \"testuser\", \"password\": \"password\"}"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.token").value("token"));
     }
@@ -55,7 +55,7 @@ class AuthControllerTest {
     void register_invalidRequest_returnsBadRequest() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"username\": \"\", \"password\": \"password\", \"email\": \"invalid\"}"))
+                        .content("{\"email\": \"\", \"password\": \"password\"}"))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest());
     }
 

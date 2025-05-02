@@ -32,7 +32,7 @@ public class ScheduledTrip {
     private LocalDateTime departureDateTime;
     @Column(name = "arrival_date_time")
     private LocalDateTime arrivalDateTime;
-    @OneToMany(mappedBy = "scheduledTrip", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "scheduledTrip", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<Seat> seats = new HashSet<>();
 
     public ScheduledTrip(Route route, Bus bus, LocalDateTime departureDateTime) {

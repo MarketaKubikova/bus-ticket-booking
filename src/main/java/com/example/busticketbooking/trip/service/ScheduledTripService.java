@@ -10,7 +10,6 @@ import com.example.busticketbooking.trip.dto.ScheduledTripResponse;
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
 import com.example.busticketbooking.trip.mapper.ScheduledTripMapper;
 import com.example.busticketbooking.trip.repository.ScheduledTripRepository;
-import com.example.busticketbooking.trip.route.dto.RouteRequest;
 import com.example.busticketbooking.trip.route.entity.Route;
 import com.example.busticketbooking.trip.route.repository.RouteRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,21 +29,21 @@ public class ScheduledTripService {
     private final BusRepository busRepository;
     private final ScheduledTripMapper scheduledTripMapper;
 
-    public List<ScheduledTripResponse> getScheduledTripsByRouteAndDepartureDate(RouteRequest request, LocalDate fromDate, LocalDate toDate) {
-        Route route = getRoute(request.origin(), request.destination());
-        if (fromDate == null) {
-            log.info("Starting date is not filled, using the current date");
-            fromDate = LocalDate.now();
+    public List<ScheduledTripResponse> getScheduledTripsByRouteAndDepartureDate(String origin, String destination, LocalDate date) {
+        Route route = getRoute(origin, destination);
+        if (date == null) {
+            log.info("Date is not filled, using the current date");
+            date = LocalDate.now();
         }
 
-        List<ScheduledTrip> result = scheduledTripRepository.findAllByRouteAndDepartureDateBetween(route, fromDate, toDate);
+        List<ScheduledTrip> foundTrips = scheduledTripRepository.findAllByRouteAndDepartureDate(route, date);
 
-        if (result.isEmpty()) {
-            log.error("No scheduled trips found for the given route and date range: {} to {}", fromDate, toDate);
-            throw new NotFoundException("No scheduled trips found for the given route and date range");
+        if (foundTrips.isEmpty()) {
+            log.error("No scheduled trips found from {} to {} on {}", origin, destination, date);
+            throw new NotFoundException("No scheduled trips found from " + origin + " to " + destination + " on " + date);
         }
 
-        return result.stream()
+        return foundTrips.stream()
                 .map(scheduledTripMapper::toResponseDto)
                 .toList();
     }

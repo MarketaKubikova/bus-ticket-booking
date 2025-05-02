@@ -3,7 +3,6 @@ package com.example.busticketbooking.trip.controller;
 import com.example.busticketbooking.shared.exception.GlobalExceptionHandler;
 import com.example.busticketbooking.trip.dto.ScheduledTripRequest;
 import com.example.busticketbooking.trip.dto.ScheduledTripResponse;
-import com.example.busticketbooking.trip.route.dto.RouteRequest;
 import com.example.busticketbooking.trip.seat.dto.SeatResponse;
 import com.example.busticketbooking.trip.seat.model.SeatStatus;
 import com.example.busticketbooking.trip.service.ScheduledTripService;
@@ -19,7 +18,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import java.time.*;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
 
@@ -41,19 +43,14 @@ class ScheduledTripControllerIntegrationTest {
     private MockMvc mockMvc;
 
     @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
-    void getScheduledTripsByRouteAndDepartureDate_withAdminRoleAndValidRequest_shouldReturnScheduledTripList() throws Exception {
-        when(scheduledTripService.getScheduledTripsByRouteAndDepartureDate(
-                new RouteRequest("Prague", "Vienna", 334.0, Duration.ofHours(4)),
-                LocalDate.of(2025, 1, 1),
-                LocalDate.of(2025, 1, 5)))
+    void searchScheduledTrips_withoutAdminRoleNotAuthenticatedAndValidRequest_shouldReturnScheduledTripList() throws Exception {
+        when(scheduledTripService.getScheduledTripsByRouteAndDepartureDate("Prague", "Vienna", LocalDate.of(2025, 1, 1)))
                 .thenReturn(List.of(scheduledTripResponse));
 
-        mockMvc.perform(get(BASE_URL)
-                        .param("from", "2025-01-01")
-                        .param("to", "2025-01-05")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"origin\":\"Prague\",\"destination\":\"Vienna\", \"distance\":334.0,\"duration\":\"PT4H\"}"))
+        mockMvc.perform(get(BASE_URL + "/search")
+                        .param("from", "Prague")
+                        .param("to", "Vienna")
+                        .param("date", "2025-01-01"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(1))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].busNumber").value("101"))
@@ -68,34 +65,10 @@ class ScheduledTripControllerIntegrationTest {
 
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
-    void getScheduledTripsByRouteAndDepartureDate_withAdminRoleWithInvalidRequest_shouldReturnBadRequest() throws Exception {
-        mockMvc.perform(get(BASE_URL)
-                        .param("from", "2025-01-01")
-                        .param("to", "2025-01-05")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"origin\":\" \",\"destination\":null}"))
+    void searchScheduledTrips_withAdminRoleWithInvalidQuery_shouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/search")
+                        .param("from", "2025-01-01"))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest());
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
-    void getScheduledTripsByRouteAndDepartureDate_withAdminRoleWithInvalidQuery_shouldReturnBadRequest() throws Exception {
-        mockMvc.perform(get(BASE_URL)
-                        .param("from", "2025-01-01")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"origin\":\"Prague\",\"destination\":\"Vienna\"}"))
-                .andExpect(MockMvcResultMatchers.status().isBadRequest());
-    }
-
-    @Test
-    @WithMockUser(username = "user")
-    void getScheduledTripsByRouteAndDepartureDate_withoutAdminRole_shouldReturnForbidden() throws Exception {
-        mockMvc.perform(get(BASE_URL)
-                        .param("from", "2025-01-01")
-                        .param("to", "2025-01-05")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"origin\":\"Prague\",\"destination\":\"Vienna\"}"))
-                .andExpect(MockMvcResultMatchers.status().isForbidden());
     }
 
     @Test

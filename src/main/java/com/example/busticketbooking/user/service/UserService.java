@@ -26,13 +26,14 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
 
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByUsername(request.username())) {
-            throw new AlreadyExistsException("User with username '" + request.username() + "' already exists");
+        if (userRepository.existsByUsername(request.email())) {
+            throw new AlreadyExistsException("User with username '" + request.email() + "' already exists");
         }
 
         AppUser user = new AppUser();
-        user.setUsername(request.username());
+        user.setUsername(request.email());
         user.setPassword(passwordConfig.passwordEncoder().encode(request.password()));
+        user.setEmail(request.email());
         user.setRole(Role.USER);
 
         AppUser saved = userRepository.save(user);

@@ -41,12 +41,12 @@ class RouteControllerIntegrationTest {
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void createRoute_withAdminRoleAndValidRequest_shouldReturnRouteResponse() throws Exception {
-        when(routeService.createRoute(new RouteRequest("Prague", "Vienna", 334.0, Duration.ofHours(4))))
+        when(routeService.createRoute(new RouteRequest("Prague", "Vienna", 334.0, "04:00")))
                 .thenReturn(new RouteResponse("Prague", "Vienna", 334.0, Duration.ofHours(4)));
 
         mockMvc.perform(post(BASE_URL)
                         .contentType("application/json")
-                        .content("{\"origin\": \"Prague\", \"destination\": \"Vienna\", \"distance\": 334.0, \"duration\": \"PT4H\"}"))
+                        .content("{\"origin\": \"Prague\", \"destination\": \"Vienna\", \"distance\": 334.0, \"duration\": \"04:00\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.origin").value("Prague"))
                 .andExpect(jsonPath("$.destination").value("Vienna"))
@@ -57,12 +57,12 @@ class RouteControllerIntegrationTest {
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void createRoute_withAdminRoleAndExistingRoute_shouldReturnConflict() throws Exception {
-        when(routeService.createRoute(new RouteRequest("Prague", "Vienna", 334.0, Duration.ofHours(4))))
+        when(routeService.createRoute(new RouteRequest("Prague", "Vienna", 334.0, "04:00")))
                 .thenThrow(new AlreadyExistsException("Route already exists"));
 
         mockMvc.perform(post(BASE_URL)
                         .contentType("application/json")
-                        .content("{\"origin\": \"Prague\", \"destination\": \"Vienna\", \"distance\": 334.0, \"duration\": \"PT4H\"}"))
+                        .content("{\"origin\": \"Prague\", \"destination\": \"Vienna\", \"distance\": 334.0, \"duration\": \"04:00\"}"))
                 .andExpect(status().isConflict());
     }
 
@@ -71,7 +71,7 @@ class RouteControllerIntegrationTest {
     void createRoute_withAdminRoleAndInvalidRequest_shouldReturnBadRequest() throws Exception {
         mockMvc.perform(post(BASE_URL)
                         .contentType("application/json")
-                        .content("{\"origin\": \"\", \"destination\": \"Vienna\", \"distance\": 334.0, \"duration\": \"PT4H\"}"))
+                        .content("{\"origin\": \"\", \"destination\": \"Vienna\", \"distance\": 334.0, \"duration\": \"04:00\"}"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -80,7 +80,7 @@ class RouteControllerIntegrationTest {
     void createRoute_withoutAdminRole_shouldReturnForbidden() throws Exception {
         mockMvc.perform(post(BASE_URL)
                         .contentType("application/json")
-                        .content("{\"origin\": \"Prague\", \"destination\": \"Vienna\", \"distance\": 334.0, \"duration\": \"PT4H\"}"))
+                        .content("{\"origin\": \"Prague\", \"destination\": \"Vienna\", \"distance\": 334.0, \"duration\": \"04:00\"}"))
                 .andExpect(status().isForbidden());
     }
 
