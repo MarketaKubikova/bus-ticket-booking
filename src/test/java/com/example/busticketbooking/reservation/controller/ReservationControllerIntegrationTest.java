@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 @Import(GlobalExceptionHandler.class)
 @ActiveProfiles("test")
 class ReservationControllerIntegrationTest {
-    private static final String BASE_URL = "/api/reservations";
+    private static final String BASE_URL = "/api/v1/reservations";
 
     @MockitoBean
     private ReservationService reservationService;

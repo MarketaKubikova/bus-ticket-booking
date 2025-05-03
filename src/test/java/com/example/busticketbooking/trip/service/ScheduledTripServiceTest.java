@@ -8,13 +8,10 @@ import com.example.busticketbooking.shared.exception.RouteNotFoundException;
 import com.example.busticketbooking.trip.dto.ScheduledTripRequest;
 import com.example.busticketbooking.trip.dto.ScheduledTripResponse;
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
-import com.example.busticketbooking.trip.mapper.ScheduledTripMapper;
 import com.example.busticketbooking.trip.repository.ScheduledTripRepository;
 import com.example.busticketbooking.trip.route.city.entity.City;
 import com.example.busticketbooking.trip.route.entity.Route;
 import com.example.busticketbooking.trip.route.repository.RouteRepository;
-import com.example.busticketbooking.trip.seat.dto.SeatResponse;
-import com.example.busticketbooking.trip.seat.model.SeatStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,7 +19,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.*;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -44,8 +40,6 @@ class ScheduledTripServiceTest {
     private RouteRepository routeRepository;
     @Mock
     private BusRepository busRepository;
-    @Mock
-    private ScheduledTripMapper scheduledTripMapper;
     @InjectMocks
     private ScheduledTripService service;
 
@@ -54,9 +48,6 @@ class ScheduledTripServiceTest {
         when(routeRepository.findByOriginNameAndDestinationName("Prague", "Vienna")).thenReturn(Optional.of(route));
         when(scheduledTripRepository.findAllByRouteAndDepartureDate(route, LocalDate.of(2025, 1, 1)))
                 .thenReturn(List.of(scheduledTrip1, scheduledTrip2, scheduledTrip3));
-        when(scheduledTripMapper.toResponseDto(scheduledTrip1)).thenReturn(new ScheduledTripResponse("101", "Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0), LocalDateTime.of(2025, 1, 1, 15, 0), generateSeatResponseSet(5)));
-        when(scheduledTripMapper.toResponseDto(scheduledTrip2)).thenReturn(new ScheduledTripResponse("102", "Prague", "Vienna", LocalDateTime.of(2025, 1, 8, 11, 0), LocalDateTime.of(2025, 1, 8, 15, 0), generateSeatResponseSet(3)));
-        when(scheduledTripMapper.toResponseDto(scheduledTrip3)).thenReturn(new ScheduledTripResponse("101", "Prague", "Vienna", LocalDateTime.of(2025, 1, 15, 11, 0), LocalDateTime.of(2025, 1, 15, 15, 0), generateSeatResponseSet(5)));
 
         List<ScheduledTripResponse> result = service.getScheduledTripsByRouteAndDepartureDate("Prague", "Vienna", LocalDate.of(2025, 1, 1));
 
@@ -65,14 +56,13 @@ class ScheduledTripServiceTest {
         assertThat(result.getFirst().busNumber()).isEqualTo("101");
         assertThat(result.getFirst().departureDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 11, 0));
         assertThat(result.getFirst().arrivalDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 15, 0));
-        assertThat(result.getFirst().seats()).hasSize(5);
+        assertThat(result.getFirst().availableSeats()).isEqualTo(5);
     }
 
     @Test
     void getScheduledTripsByRouteAndDepartureDate_missingFromDate_shouldReturnListOfTrips() {
         when(routeRepository.findByOriginNameAndDestinationName("Prague", "Vienna")).thenReturn(Optional.of(route));
         when(scheduledTripRepository.findAllByRouteAndDepartureDate(route, LocalDate.now())).thenReturn(List.of(scheduledTrip1));
-        when(scheduledTripMapper.toResponseDto(scheduledTrip1)).thenReturn(new ScheduledTripResponse("101", "Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0), LocalDateTime.of(2025, 1, 1, 15, 0), generateSeatResponseSet(5)));
 
         List<ScheduledTripResponse> result = service.getScheduledTripsByRouteAndDepartureDate("Prague", "Vienna", null);
 
@@ -81,7 +71,7 @@ class ScheduledTripServiceTest {
         assertThat(result.getFirst().busNumber()).isEqualTo("101");
         assertThat(result.getFirst().departureDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 11, 0));
         assertThat(result.getFirst().arrivalDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 15, 0));
-        assertThat(result.getFirst().seats()).hasSize(5);
+        assertThat(result.getFirst().availableSeats()).isEqualTo(5);
     }
 
     @Test
@@ -98,8 +88,6 @@ class ScheduledTripServiceTest {
         when(busRepository.findByBusNumber("101")).thenReturn(Optional.of(new Bus("101", 5)));
         when(routeRepository.findByOriginNameAndDestinationName("Prague", "Vienna")).thenReturn(Optional.of(route));
         when(scheduledTripRepository.saveAll(anyList())).thenReturn(List.of(scheduledTrip1, scheduledTrip2));
-        when(scheduledTripMapper.toResponseDto(scheduledTrip1)).thenReturn(new ScheduledTripResponse("101", "Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0), LocalDateTime.of(2025, 1, 1, 15, 0), generateSeatResponseSet(5)));
-        when(scheduledTripMapper.toResponseDto(scheduledTrip2)).thenReturn(new ScheduledTripResponse("101", "Prague", "Vienna", LocalDateTime.of(2025, 1, 8, 11, 0), LocalDateTime.of(2025, 1, 8, 15, 0), generateSeatResponseSet(5)));
 
         List<ScheduledTripResponse> result = service.generateScheduledTripsByRule(request);
 
@@ -108,7 +96,7 @@ class ScheduledTripServiceTest {
         assertThat(result.getFirst().busNumber()).isEqualTo("101");
         assertThat(result.getFirst().departureDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 11, 0));
         assertThat(result.getFirst().arrivalDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 15, 0));
-        assertThat(result.getFirst().seats()).hasSize(5);
+        assertThat(result.getFirst().availableSeats()).isEqualTo(5);
     }
 
     @Test
@@ -128,14 +116,5 @@ class ScheduledTripServiceTest {
         when(routeRepository.findByOriginNameAndDestinationName("Prague", "Vienna")).thenReturn(Optional.of(route));
 
         assertThrows(NoTripCreatedException.class, () -> service.generateScheduledTripsByRule(request));
-    }
-
-    private Set<SeatResponse> generateSeatResponseSet(int capacity) {
-        Set<SeatResponse> seatResponseSet = new HashSet<>();
-        for (int i = 1; i <= capacity; i++) {
-            seatResponseSet.add(new SeatResponse(i, SeatStatus.FREE));
-        }
-
-        return seatResponseSet;
     }
 }

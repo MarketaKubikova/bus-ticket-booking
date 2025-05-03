@@ -3,8 +3,6 @@ package com.example.busticketbooking.trip.controller;
 import com.example.busticketbooking.shared.exception.GlobalExceptionHandler;
 import com.example.busticketbooking.trip.dto.ScheduledTripRequest;
 import com.example.busticketbooking.trip.dto.ScheduledTripResponse;
-import com.example.busticketbooking.trip.seat.dto.SeatResponse;
-import com.example.busticketbooking.trip.seat.model.SeatStatus;
 import com.example.busticketbooking.trip.service.ScheduledTripService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,8 +32,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @Import(GlobalExceptionHandler.class)
 @ActiveProfiles("test")
 class ScheduledTripControllerIntegrationTest {
-    private static final String BASE_URL = "/api/scheduled-trips";
-    private final ScheduledTripResponse scheduledTripResponse = new ScheduledTripResponse("101", "Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0), LocalDateTime.of(2025, 1, 1, 15, 0), Set.of(new SeatResponse(1, SeatStatus.FREE)));
+    private static final String BASE_URL = "/api/v1/scheduled-trips";
+    private final ScheduledTripResponse scheduledTripResponse = new ScheduledTripResponse("101", "Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0), LocalDateTime.of(2025, 1, 1, 15, 0), 1);
 
     @MockitoBean
     private ScheduledTripService scheduledTripService;
@@ -58,9 +56,7 @@ class ScheduledTripControllerIntegrationTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].destination").value("Vienna"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].departureDateTime").value("2025-01-01T11:00:00"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].arrivalDateTime").value("2025-01-01T15:00:00"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].seats.length()").value(1))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].seats[0].seatNumber").value(1))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].seats[0].status").value("FREE"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].availableSeats").value(1));
     }
 
     @Test
@@ -88,9 +84,7 @@ class ScheduledTripControllerIntegrationTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].destination").value("Vienna"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].departureDateTime").value("2025-01-01T11:00:00"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].arrivalDateTime").value("2025-01-01T15:00:00"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].seats.length()").value(1))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].seats[0].seatNumber").value(1))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].seats[0].status").value("FREE"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].availableSeats").value(1));
     }
 
     @Test

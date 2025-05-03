@@ -17,7 +17,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/scheduled-trips")
+@RequestMapping("/api/v1/scheduled-trips")
 @RequiredArgsConstructor
 @Validated
 public class ScheduledTripController {
