@@ -34,9 +34,10 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers((HttpMethod.POST), "/api/reservations").permitAll()
-                        .requestMatchers((HttpMethod.GET), "/api/scheduled-trips/search").permitAll()
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers((HttpMethod.POST), "/api/v1/reservations").permitAll()
+                        .requestMatchers((HttpMethod.GET), "/api/v1/scheduled-trips/search").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/seats/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider)

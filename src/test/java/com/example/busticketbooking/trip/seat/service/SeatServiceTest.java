@@ -3,6 +3,7 @@ package com.example.busticketbooking.trip.seat.service;
 import com.example.busticketbooking.shared.exception.NotFoundException;
 import com.example.busticketbooking.shared.exception.SeatNotAvailableException;
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
+import com.example.busticketbooking.trip.seat.dto.SeatResponse;
 import com.example.busticketbooking.trip.seat.entity.Seat;
 import com.example.busticketbooking.trip.seat.model.SeatStatus;
 import com.example.busticketbooking.trip.seat.repository.SeatRepository;
@@ -12,6 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -73,5 +76,31 @@ class SeatServiceTest {
         seatService.releaseSeat(seat);
 
         assertThat(seat.getStatus()).isEqualTo(SeatStatus.FREE);
+    }
+
+    @Test
+    void getSeatsForScheduledTrip_validScheduledTripId_shouldReturnSeats() {
+        long scheduledTripId = 1L;
+        Seat seat1 = new Seat(1L, 1, SeatStatus.FREE, null);
+        Seat seat2 = new Seat(2L, 2, SeatStatus.RESERVED, null);
+
+        when(seatRepository.findByScheduledTripId(scheduledTripId)).thenReturn(List.of(seat1, seat2));
+
+        List<SeatResponse> result = seatService.getSeatsForScheduledTrip(scheduledTripId);
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).seatNumber()).isEqualTo(1);
+        assertThat(result.get(0).status()).isEqualTo(SeatStatus.FREE);
+        assertThat(result.get(1).seatNumber()).isEqualTo(2);
+        assertThat(result.get(1).status()).isEqualTo(SeatStatus.RESERVED);
+    }
+
+    @Test
+    void getSeatsForScheduledTrip_noSeatsFound_shouldThrowException() {
+        long scheduledTripId = 1L;
+
+        when(seatRepository.findByScheduledTripId(scheduledTripId)).thenReturn(Collections.emptyList());
+
+        assertThrows(NotFoundException.class, () -> seatService.getSeatsForScheduledTrip(scheduledTripId));
     }
 }

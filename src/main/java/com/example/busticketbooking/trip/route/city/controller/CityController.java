@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/cities")
+@RequestMapping("/api/v1/cities")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class CityController {

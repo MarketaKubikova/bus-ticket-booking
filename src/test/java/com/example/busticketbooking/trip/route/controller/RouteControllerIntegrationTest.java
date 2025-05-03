@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(GlobalExceptionHandler.class)
 @ActiveProfiles("test")
 class RouteControllerIntegrationTest {
-    private static final String BASE_URL = "/api/routes";
+    private static final String BASE_URL = "/api/v1/routes";
 
     @MockitoBean
     private RouteService routeService;

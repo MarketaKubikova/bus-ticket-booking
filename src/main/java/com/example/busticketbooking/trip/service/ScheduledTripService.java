@@ -8,7 +8,6 @@ import com.example.busticketbooking.shared.exception.RouteNotFoundException;
 import com.example.busticketbooking.trip.dto.ScheduledTripRequest;
 import com.example.busticketbooking.trip.dto.ScheduledTripResponse;
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
-import com.example.busticketbooking.trip.mapper.ScheduledTripMapper;
 import com.example.busticketbooking.trip.repository.ScheduledTripRepository;
 import com.example.busticketbooking.trip.route.entity.Route;
 import com.example.busticketbooking.trip.route.repository.RouteRepository;
@@ -27,7 +26,6 @@ public class ScheduledTripService {
     private final ScheduledTripRepository scheduledTripRepository;
     private final RouteRepository routeRepository;
     private final BusRepository busRepository;
-    private final ScheduledTripMapper scheduledTripMapper;
 
     public List<ScheduledTripResponse> getScheduledTripsByRouteAndDepartureDate(String origin, String destination, LocalDate date) {
         Route route = getRoute(origin, destination);
@@ -44,7 +42,14 @@ public class ScheduledTripService {
         }
 
         return foundTrips.stream()
-                .map(scheduledTripMapper::toResponseDto)
+                .map(entity -> new ScheduledTripResponse(
+                        entity.getBus().getBusNumber(),
+                        entity.getRoute().getOrigin().getName(),
+                        entity.getRoute().getDestination().getName(),
+                        entity.getDepartureDateTime(),
+                        entity.getArrivalDateTime(),
+                        entity.getAvailableSeatsForReservation().size()
+                ))
                 .toList();
     }
 
@@ -70,7 +75,14 @@ public class ScheduledTripService {
         List<ScheduledTrip> savedTrips = scheduledTripRepository.saveAll(tripsToSave);
 
         return savedTrips.stream()
-                .map(scheduledTripMapper::toResponseDto)
+                .map(entity -> new ScheduledTripResponse(
+                        entity.getBus().getBusNumber(),
+                        entity.getRoute().getOrigin().getName(),
+                        entity.getRoute().getDestination().getName(),
+                        entity.getDepartureDateTime(),
+                        entity.getArrivalDateTime(),
+                        entity.getAvailableSeatsForReservation().size()
+                ))
                 .toList();
     }
 

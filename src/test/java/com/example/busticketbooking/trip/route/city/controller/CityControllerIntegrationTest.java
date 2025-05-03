@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(GlobalExceptionHandler.class)
 @ActiveProfiles("test")
 class CityControllerIntegrationTest {
-    private static final String BASE_URL = "/api/cities";
+    private static final String BASE_URL = "/api/v1/cities";
 
     @MockitoBean
     private CityService cityService;

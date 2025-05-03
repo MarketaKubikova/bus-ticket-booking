@@ -44,7 +44,7 @@ class AuthControllerTest {
         AuthResponse response = new AuthResponse("token");
         when(userService.register(request)).thenReturn(response);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/register")
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\": \"testuser\", \"password\": \"password\"}"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -53,7 +53,7 @@ class AuthControllerTest {
 
     @Test
     void register_invalidRequest_returnsBadRequest() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/register")
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\": \"\", \"password\": \"password\"}"))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest());
@@ -65,7 +65,7 @@ class AuthControllerTest {
         AuthResponse response = new AuthResponse("token");
         when(userService.login(request)).thenReturn(response);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/login")
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\": \"testuser\", \"password\": \"password\"}"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -77,7 +77,7 @@ class AuthControllerTest {
         LoginRequest request = new LoginRequest("nonexistuser", "password");
         when(userService.login(request)).thenThrow(new NotFoundException("User not found"));
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/login")
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\": \"nonexistuser\", \"password\": \"password\"}"))
                 .andExpect(MockMvcResultMatchers.status().isNotFound());
@@ -85,7 +85,7 @@ class AuthControllerTest {
 
     @Test
     void login_invalidRequest_returnsBadRequest() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/login")
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\": \"\", \"password\": null}"))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest());

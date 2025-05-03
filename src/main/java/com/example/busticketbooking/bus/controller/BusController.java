@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/buses")
+@RequestMapping("/api/v1/buses")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class BusController {
