@@ -22,6 +22,7 @@ import com.example.busticketbooking.trip.seat.service.SeatService;
 import com.example.busticketbooking.user.entity.AppUser;
 import com.example.busticketbooking.user.model.Role;
 import com.example.busticketbooking.user.repository.UserRepository;
+import jakarta.persistence.OptimisticLockException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -78,7 +79,7 @@ class ReservationServiceTest {
         Bus bus = new Bus("99", 5);
         LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
         ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), bus, departureDateTime);
-        Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip);
+        Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip, 1);
         Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, departureDateTime, null, ReservationStatus.ACTIVE, null);
         ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com");
         LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
@@ -111,7 +112,7 @@ class ReservationServiceTest {
         Bus bus = new Bus("99", 5);
         LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
         ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), bus, departureDateTime);
-        Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip);
+        Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip, 1);
         Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, null);
         ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com");
         LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
@@ -156,6 +157,19 @@ class ReservationServiceTest {
 
         when(scheduledTripRepository.findById(1L)).thenReturn(Optional.of(scheduledTrip));
         when(seatService.reserveSeat(request.seatNumber(), scheduledTrip)).thenThrow(SeatNotAvailableException.class);
+
+        assertThrows(SeatNotAvailableException.class, () -> service.createReservation(request));
+    }
+
+    @Test
+    void createReservations_twoUsersReserveSameSeat_shouldThrowException() {
+        ReservationRequest request = new ReservationRequest(1L, 1, "test@test.com");
+        Bus bus = new Bus("99", 5);
+        LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), bus, departureDateTime);
+
+        when(scheduledTripRepository.findById(1L)).thenReturn(Optional.of(scheduledTrip));
+        when(seatService.reserveSeat(request.seatNumber(), scheduledTrip)).thenThrow(OptimisticLockException.class);
 
         assertThrows(SeatNotAvailableException.class, () -> service.createReservation(request));
     }

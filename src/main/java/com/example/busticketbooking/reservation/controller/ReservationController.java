@@ -38,7 +38,7 @@ public class ReservationController {
 
     @DeleteMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> cancelReservation(@RequestParam @NotNull Long reservationId,
+    public ResponseEntity<Void> cancelReservation(@RequestParam(value = "reservationId") @NotNull Long reservationId,
                                                   @AuthenticationPrincipal AppUser user) {
         reservationService.cancelReservation(reservationId, user);
         return ResponseEntity.noContent().build();

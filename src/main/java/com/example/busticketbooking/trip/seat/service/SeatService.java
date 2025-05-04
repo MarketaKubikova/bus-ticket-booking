@@ -10,6 +10,7 @@ import com.example.busticketbooking.trip.seat.repository.SeatRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -19,6 +20,7 @@ import java.util.List;
 public class SeatService {
     private final SeatRepository seatRepository;
 
+    @Transactional
     public Seat reserveSeat(int seatNumber, ScheduledTrip scheduledTrip) {
         Seat scheduledTripSeat = scheduledTrip.getAvailableSeatsForReservation().stream()
                 .filter(s -> s.getSeatNumber() == seatNumber)
@@ -31,7 +33,7 @@ public class SeatService {
         seat.setStatus(SeatStatus.RESERVED);
         log.info("Seat {} in {} is reserved", seatNumber, scheduledTrip);
 
-        return seatRepository.save(seat);
+        return seatRepository.saveAndFlush(seat);
     }
 
     public void releaseSeat(Seat seat) {

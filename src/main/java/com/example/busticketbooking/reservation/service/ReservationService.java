@@ -9,12 +9,14 @@ import com.example.busticketbooking.reservation.repository.ReservationRepository
 import com.example.busticketbooking.shared.exception.BadRequestException;
 import com.example.busticketbooking.shared.exception.ForbiddenException;
 import com.example.busticketbooking.shared.exception.NotFoundException;
+import com.example.busticketbooking.shared.exception.SeatNotAvailableException;
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
 import com.example.busticketbooking.trip.repository.ScheduledTripRepository;
 import com.example.busticketbooking.trip.seat.entity.Seat;
 import com.example.busticketbooking.trip.seat.service.SeatService;
 import com.example.busticketbooking.user.entity.AppUser;
 import com.example.busticketbooking.user.repository.UserRepository;
+import jakarta.persistence.OptimisticLockException;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +49,14 @@ public class ReservationService {
         ScheduledTrip scheduledTrip = scheduledTripRepository.findById(request.scheduledTripId())
                 .orElseThrow(() -> new NotFoundException("ScheduledTrip with ID '" + request.scheduledTripId() + "' not found"));
 
-        Seat seat = seatService.reserveSeat(request.seatNumber(), scheduledTrip);
+        Seat seat;
+
+        try {
+            seat = seatService.reserveSeat(request.seatNumber(), scheduledTrip);
+        } catch (OptimisticLockException e) {
+            log.error("Seat {} was already reserved by another user", request.seatNumber());
+            throw new SeatNotAvailableException(request.seatNumber());
+        }
 
         Reservation reservation = new Reservation();
         reservation.setScheduledTrip(scheduledTrip);

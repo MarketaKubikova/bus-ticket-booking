@@ -2,12 +2,16 @@ package com.example.busticketbooking.user.service;
 
 import com.example.busticketbooking.shared.config.PasswordConfig;
 import com.example.busticketbooking.shared.exception.AlreadyExistsException;
+import com.example.busticketbooking.shared.exception.TooManyRequestsException;
 import com.example.busticketbooking.shared.security.JwtService;
+import com.example.busticketbooking.shared.security.LoginRateLimiter;
 import com.example.busticketbooking.user.dto.AuthResponse;
 import com.example.busticketbooking.user.dto.LoginRequest;
 import com.example.busticketbooking.user.dto.RegisterRequest;
 import com.example.busticketbooking.user.entity.AppUser;
 import com.example.busticketbooking.user.repository.UserRepository;
+import io.github.bucket4j.Bucket;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -39,6 +43,12 @@ class UserServiceTest {
     private Authentication authentication;
     @Mock
     private UserDetails userDetails;
+    @Mock
+    private HttpServletRequest servletRequest;
+    @Mock
+    private LoginRateLimiter rateLimiter;
+    @Mock
+    private Bucket bucket;
     @InjectMocks
     private UserService userService;
 
@@ -74,14 +84,28 @@ class UserServiceTest {
     void login_validRequest_shouldReturnAuthResponse() {
         LoginRequest request = new LoginRequest("testuser", "password");
 
+        when(servletRequest.getRemoteAddr()).thenReturn("127.0.0.1");
+        when(rateLimiter.resolveBucket(anyString())).thenReturn(bucket);
+        when(bucket.tryConsume(anyLong())).thenReturn(true);
         when(authenticationManager.authenticate(any())).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
         when(jwtService.generateToken(any(UserDetails.class))).thenReturn("generated-token");
 
-        AuthResponse response = userService.login(request);
+        AuthResponse response = userService.login(request, servletRequest);
 
         assertThat(response.token()).isEqualTo("generated-token");
         verify(authenticationManager, times(1)).authenticate(any());
         verify(jwtService, times(1)).generateToken(any());
+    }
+
+    @Test
+    void login_tooManyRequests_shouldReturnThrowException() {
+        LoginRequest request = new LoginRequest("testuser", "password");
+
+        when(servletRequest.getRemoteAddr()).thenReturn("127.0.0.1");
+        when(rateLimiter.resolveBucket(anyString())).thenReturn(bucket);
+        when(bucket.tryConsume(anyLong())).thenReturn(false);
+
+        assertThrows(TooManyRequestsException.class, () -> userService.login(request, servletRequest));
     }
 }
