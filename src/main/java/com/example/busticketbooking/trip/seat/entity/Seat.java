@@ -26,6 +26,8 @@ public class Seat {
     @ManyToOne
     @JoinColumn(name = "scheduled_trip_id", nullable = false)
     private ScheduledTrip scheduledTrip;
+    @Version
+    private Integer version;
 
     public Seat(int seatNumber, ScheduledTrip scheduledTrip) {
         this.seatNumber = seatNumber;

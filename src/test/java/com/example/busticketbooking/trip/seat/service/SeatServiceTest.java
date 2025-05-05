@@ -1,8 +1,11 @@
 package com.example.busticketbooking.trip.seat.service;
 
+import com.example.busticketbooking.bus.entity.Bus;
 import com.example.busticketbooking.shared.exception.NotFoundException;
 import com.example.busticketbooking.shared.exception.SeatNotAvailableException;
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
+import com.example.busticketbooking.trip.route.city.entity.City;
+import com.example.busticketbooking.trip.route.entity.Route;
 import com.example.busticketbooking.trip.seat.dto.SeatResponse;
 import com.example.busticketbooking.trip.seat.entity.Seat;
 import com.example.busticketbooking.trip.seat.model.SeatStatus;
@@ -13,6 +16,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -32,12 +37,12 @@ class SeatServiceTest {
 
     @Test
     void reserveSeat_validSeatNumber_shouldReturnReservedSeat() {
-        ScheduledTrip scheduledTrip = new ScheduledTrip();
-        Seat seat = new Seat(1L, 1, SeatStatus.FREE, scheduledTrip);
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 8, 0));
+        Seat seat = new Seat(1L, 1, SeatStatus.FREE, scheduledTrip, 1);
         scheduledTrip.setSeats(Set.of(seat));
 
         when(seatRepository.findById(any())).thenReturn(Optional.of(seat));
-        when(seatRepository.save(seat)).thenReturn(seat);
+        when(seatRepository.saveAndFlush(seat)).thenReturn(seat);
 
         Seat result = seatService.reserveSeat(1, scheduledTrip);
 
@@ -47,8 +52,8 @@ class SeatServiceTest {
 
     @Test
     void reserveSeat_seatNumberNotAvailable_shouldThrowException() {
-        ScheduledTrip scheduledTrip = new ScheduledTrip();
-        Seat seat = new Seat(2L, 2, SeatStatus.BLOCKED, scheduledTrip);
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 8, 0));
+        Seat seat = new Seat(2L, 2, SeatStatus.BLOCKED, scheduledTrip, 1);
         scheduledTrip.setSeats(Set.of(seat));
 
         assertThrows(SeatNotAvailableException.class, () -> seatService.reserveSeat(2, scheduledTrip));
@@ -56,8 +61,8 @@ class SeatServiceTest {
 
     @Test
     void reserveSeat_seatNumberNotFound_shouldThrowException() {
-        ScheduledTrip scheduledTrip = new ScheduledTrip();
-        Seat seat = new Seat(5L, 5, SeatStatus.FREE, scheduledTrip);
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 8, 0));
+        Seat seat = new Seat(5L, 5, SeatStatus.FREE, scheduledTrip, 1);
         scheduledTrip.setSeats(Set.of(seat));
 
         when(seatRepository.findById(5L)).thenReturn(Optional.empty());
@@ -67,8 +72,8 @@ class SeatServiceTest {
 
     @Test
     void releaseSeat_validSeat_shouldUpdateSeatStatus() {
-        ScheduledTrip scheduledTrip = new ScheduledTrip();
-        Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip);
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 8, 0));
+        Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip, 1);
         scheduledTrip.setSeats(Set.of(seat));
 
         when(seatRepository.save(seat)).thenReturn(seat);
@@ -81,8 +86,8 @@ class SeatServiceTest {
     @Test
     void getSeatsForScheduledTrip_validScheduledTripId_shouldReturnSeats() {
         long scheduledTripId = 1L;
-        Seat seat1 = new Seat(1L, 1, SeatStatus.FREE, null);
-        Seat seat2 = new Seat(2L, 2, SeatStatus.RESERVED, null);
+        Seat seat1 = new Seat(1L, 1, SeatStatus.FREE, null, 1);
+        Seat seat2 = new Seat(2L, 2, SeatStatus.RESERVED, null, 1);
 
         when(seatRepository.findByScheduledTripId(scheduledTripId)).thenReturn(List.of(seat1, seat2));
 

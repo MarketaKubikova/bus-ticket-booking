@@ -4,6 +4,7 @@ import com.example.busticketbooking.user.dto.AuthResponse;
 import com.example.busticketbooking.user.dto.LoginRequest;
 import com.example.busticketbooking.user.dto.RegisterRequest;
 import com.example.busticketbooking.user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,14 +22,14 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody @Valid RegisterRequest request) {
-        var response = userService.register(request);
+        AuthResponse response = userService.register(request);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody @Valid LoginRequest request) {
-        AuthResponse response = userService.login(request);
-
+    public ResponseEntity<AuthResponse> login(@RequestBody @Valid LoginRequest request,
+                                              HttpServletRequest servletRequest) {
+        AuthResponse response = userService.login(request, servletRequest);
         return ResponseEntity.ok(response);
     }
 }
