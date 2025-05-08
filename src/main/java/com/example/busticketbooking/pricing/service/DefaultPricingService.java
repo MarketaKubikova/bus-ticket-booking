@@ -2,6 +2,7 @@ package com.example.busticketbooking.pricing.service;
 
 import com.example.busticketbooking.pricing.context.PricingContext;
 import com.example.busticketbooking.pricing.strategy.PricingStrategy;
+import com.example.busticketbooking.reservation.model.Tariff;
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
 import com.example.busticketbooking.user.entity.AppUser;
 import lombok.RequiredArgsConstructor;
@@ -17,9 +18,9 @@ public class DefaultPricingService implements PricingService {
     private final List<PricingStrategy> strategies;
 
     @Override
-    public BigDecimal calculatePrice(ScheduledTrip trip, AppUser user) {
+    public BigDecimal calculatePrice(ScheduledTrip trip, AppUser user, Tariff tariff) {
         BigDecimal price = trip.getRoute().getBasePriceCzk();
-        PricingContext context = new PricingContext(trip, user);
+        PricingContext context = new PricingContext(trip, user, tariff);
 
         for (PricingStrategy strategy : strategies) {
             price = strategy.apply(price, context);

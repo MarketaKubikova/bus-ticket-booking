@@ -1,6 +1,7 @@
 package com.example.busticketbooking.reservation.dto;
 
 import com.example.busticketbooking.reservation.model.ReservationStatus;
+import com.example.busticketbooking.reservation.model.Tariff;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,4 +22,5 @@ public class ReservationResponse {
     private String passengerEmail;
     private ReservationStatus status;
     private BigDecimal priceCzk;
+    private Tariff tariff;
 }

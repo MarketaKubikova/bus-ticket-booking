@@ -3,6 +3,7 @@ package com.example.busticketbooking.reservation.controller;
 import com.example.busticketbooking.reservation.dto.ReservationRequest;
 import com.example.busticketbooking.reservation.dto.ReservationResponse;
 import com.example.busticketbooking.reservation.model.ReservationStatus;
+import com.example.busticketbooking.reservation.model.Tariff;
 import com.example.busticketbooking.reservation.service.ReservationService;
 import com.example.busticketbooking.shared.exception.GlobalExceptionHandler;
 import com.example.busticketbooking.user.entity.AppUser;
@@ -43,11 +44,11 @@ class ReservationControllerIntegrationTest {
 
     @Test
     void createReservation_validRequest_returnsCreated() throws Exception {
-        when(reservationService.createReservation(any(ReservationRequest.class))).thenReturn(new ReservationResponse("Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0, 0), 1, "test@test.com", ReservationStatus.ACTIVE, BigDecimal.TEN));
+        when(reservationService.createReservation(any(ReservationRequest.class))).thenReturn(new ReservationResponse("Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0, 0), 1, "test@test.com", ReservationStatus.ACTIVE, BigDecimal.TEN, Tariff.ADULT));
 
         mockMvc.perform(MockMvcRequestBuilders.post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"scheduledTripId\": 1, \"seatNumber\": 1, \"passengerEmail\": \"test@test.com\"}"))
+                        .content("{\"scheduledTripId\": 1, \"seatNumber\": 1, \"passengerEmail\": \"test@test.com\", \"tariff\": \"ADULT\"}"))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.origin").value("Prague"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.destination").value("Vienna"))
@@ -55,7 +56,8 @@ class ReservationControllerIntegrationTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.seatNumber").value(1))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.passengerEmail").value("test@test.com"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("ACTIVE"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.priceCzk").value("10"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.priceCzk").value("10"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.tariff").value("ADULT"));
     }
 
     @Test
@@ -69,7 +71,7 @@ class ReservationControllerIntegrationTest {
     @Test
     @WithMockUser(username = "user")
     void getUsersReservations_validRequest_returnsReservation() throws Exception {
-        when(reservationService.getUsersReservations(any())).thenReturn(List.of(new ReservationResponse("Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0), 1, "test@test.com", ReservationStatus.ACTIVE, BigDecimal.TEN)));
+        when(reservationService.getUsersReservations(any())).thenReturn(List.of(new ReservationResponse("Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0), 1, "test@test.com", ReservationStatus.ACTIVE, BigDecimal.TEN, Tariff.ADULT)));
 
         mockMvc.perform(MockMvcRequestBuilders.get(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON))
@@ -80,7 +82,8 @@ class ReservationControllerIntegrationTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].seatNumber").value(1))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].passengerEmail").value("test@test.com"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].status").value("ACTIVE"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].priceCzk").value("10"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].priceCzk").value("10"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].tariff").value("ADULT"));
     }
 
     @Test

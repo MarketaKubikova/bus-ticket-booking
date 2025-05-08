@@ -7,6 +7,7 @@ import com.example.busticketbooking.reservation.dto.ReservationResponse;
 import com.example.busticketbooking.reservation.entity.Reservation;
 import com.example.busticketbooking.reservation.mapper.ReservationMapper;
 import com.example.busticketbooking.reservation.model.ReservationStatus;
+import com.example.busticketbooking.reservation.model.Tariff;
 import com.example.busticketbooking.reservation.repository.ReservationRepository;
 import com.example.busticketbooking.shared.exception.BadRequestException;
 import com.example.busticketbooking.shared.exception.ForbiddenException;
@@ -79,13 +80,13 @@ class ReservationServiceTest {
 
     @Test
     void createReservation_validRequestNonLoggedInUser_reservationCreated() {
-        ReservationRequest request = new ReservationRequest(1L, 1, "test@test.com");
+        ReservationRequest request = new ReservationRequest(1L, 1, "test@test.com", Tariff.ADULT);
         Bus bus = new Bus("99", 5);
         LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
         ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime);
         Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip, 1);
-        Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, departureDateTime, null, ReservationStatus.ACTIVE, null, BigDecimal.TEN);
-        ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com", ReservationStatus.ACTIVE, BigDecimal.TEN);
+        Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, departureDateTime, null, ReservationStatus.ACTIVE, null, BigDecimal.TEN, Tariff.ADULT);
+        ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com", ReservationStatus.ACTIVE, BigDecimal.TEN, Tariff.ADULT);
         LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
         Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
 
@@ -93,7 +94,7 @@ class ReservationServiceTest {
         when(clock.getZone()).thenReturn(Constant.ZONE_PRAGUE);
         when(scheduledTripRepository.findById(1L)).thenReturn(Optional.of(scheduledTrip));
         when(seatService.reserveSeat(request.seatNumber(), scheduledTrip)).thenReturn(seat);
-        when(pricingService.calculatePrice(scheduledTrip, null)).thenReturn(BigDecimal.TEN);
+        when(pricingService.calculatePrice(scheduledTrip, null, Tariff.ADULT)).thenReturn(BigDecimal.TEN);
         when(reservationRepository.save(any(Reservation.class))).thenReturn(createdReservation);
         when(reservationMapper.toResponseDto(createdReservation)).thenReturn(response);
 
@@ -106,6 +107,7 @@ class ReservationServiceTest {
         assertThat(result.getPassengerEmail()).isEqualTo("test@test.com");
         assertThat(result.getStatus()).isEqualTo(ReservationStatus.ACTIVE);
         assertThat(result.getPriceCzk()).isEqualTo(BigDecimal.TEN);
+        assertThat(result.getTariff()).isEqualTo(Tariff.ADULT);
         verify(scheduledTripRepository, times(1)).findById(anyLong());
         verify(reservationRepository, times(1)).save(any(Reservation.class));
         verify(seatService, times(1)).reserveSeat(anyInt(), any(ScheduledTrip.class));
@@ -114,14 +116,14 @@ class ReservationServiceTest {
 
     @Test
     void createReservation_validRequestLoggedInUser_reservationCreated() {
-        ReservationRequest request = new ReservationRequest(1L, 1);
+        ReservationRequest request = new ReservationRequest(1L, 1, Tariff.ADULT);
         AppUser user = createUser();
         Bus bus = new Bus("99", 5);
         LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
         ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime);
         Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip, 1);
         Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, null, BigDecimal.TEN);
-        ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com", ReservationStatus.ACTIVE, BigDecimal.TEN);
+        ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com", ReservationStatus.ACTIVE, BigDecimal.TEN, Tariff.ADULT);
         LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
         Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
 
@@ -134,7 +136,7 @@ class ReservationServiceTest {
         when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
         when(scheduledTripRepository.findById(1L)).thenReturn(Optional.of(scheduledTrip));
         when(seatService.reserveSeat(request.seatNumber(), scheduledTrip)).thenReturn(seat);
-        when(pricingService.calculatePrice(scheduledTrip, user)).thenReturn(BigDecimal.TEN);
+        when(pricingService.calculatePrice(scheduledTrip, user, Tariff.ADULT)).thenReturn(BigDecimal.TEN);
         when(reservationRepository.save(any(Reservation.class))).thenReturn(createdReservation);
         when(reservationMapper.toResponseDto(createdReservation)).thenReturn(response);
 
@@ -147,11 +149,12 @@ class ReservationServiceTest {
         assertThat(result.getPassengerEmail()).isEqualTo("test@test.com");
         assertThat(result.getStatus()).isEqualTo(ReservationStatus.ACTIVE);
         assertThat(result.getPriceCzk()).isEqualTo(BigDecimal.TEN);
+        assertThat(result.getTariff()).isEqualTo(Tariff.ADULT);
     }
 
     @Test
     void createReservation_scheduledTripDoesNotExist_shouldThrowException() {
-        ReservationRequest request = new ReservationRequest(99L, 1, "test@test.com");
+        ReservationRequest request = new ReservationRequest(99L, 1, "test@test.com", Tariff.ADULT);
 
         when(scheduledTripRepository.findById(99L)).thenReturn(Optional.empty());
 
@@ -160,7 +163,7 @@ class ReservationServiceTest {
 
     @Test
     void createReservation_seatNotAvailable_shouldThrowException() {
-        ReservationRequest request = new ReservationRequest(1L, 99, "test@test.com");
+        ReservationRequest request = new ReservationRequest(1L, 99, "test@test.com", Tariff.ADULT);
         Bus bus = new Bus("99", 5);
         LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
         ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime);
@@ -173,7 +176,7 @@ class ReservationServiceTest {
 
     @Test
     void createReservations_twoUsersReserveSameSeat_shouldThrowException() {
-        ReservationRequest request = new ReservationRequest(1L, 1, "test@test.com");
+        ReservationRequest request = new ReservationRequest(1L, 1, "test@test.com", Tariff.ADULT);
         Bus bus = new Bus("99", 5);
         LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
         ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime);
@@ -189,7 +192,7 @@ class ReservationServiceTest {
         AppUser user = createUser();
 
         when(reservationRepository.findAllByUser(user)).thenReturn(List.of(new Reservation()));
-        when(reservationMapper.toResponseDto(any(Reservation.class))).thenReturn(new ReservationResponse("Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0), 1, "test@test.com", ReservationStatus.ACTIVE, BigDecimal.TEN));
+        when(reservationMapper.toResponseDto(any(Reservation.class))).thenReturn(new ReservationResponse("Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0), 1, "test@test.com", ReservationStatus.ACTIVE, BigDecimal.TEN, Tariff.ADULT));
 
         var result = service.getUsersReservations(user);
 
