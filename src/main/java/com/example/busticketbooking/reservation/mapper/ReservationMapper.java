@@ -11,5 +11,7 @@ public interface ReservationMapper {
     @Mapping(target = "destination", source = "entity.scheduledTrip.route.destination.name")
     @Mapping(target = "departureDateTime", source = "entity.scheduledTrip.departureDateTime")
     @Mapping(target = "seatNumber", source = "entity.seat.seatNumber")
+    @Mapping(target = "status", source = "entity.status")
+    @Mapping(target = "priceCzk", source = "entity.priceCzk")
     ReservationResponse toResponseDto(Reservation entity);
 }

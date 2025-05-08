@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
@@ -28,7 +29,7 @@ class ReservationMapperTest {
 
     @Test
     void toResponseDtoMapsReservationToResponseDto() {
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Vienna"), new City(2L, "Budapest"), 244.0, Duration.ofHours(3)), new Bus("101", 3), LocalDateTime.of(2025, 1, 1, 9, 0));
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Vienna"), new City(2L, "Budapest"), 244.0, Duration.ofHours(3), BigDecimal.TEN), new Bus("101", 3), LocalDateTime.of(2025, 1, 1, 9, 0));
         Reservation reservation = new Reservation();
         reservation.setId(1L);
         reservation.setSeat(new Seat(1, scheduledTrip));

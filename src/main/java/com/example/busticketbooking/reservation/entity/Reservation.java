@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -37,13 +38,16 @@ public class Reservation {
     private ReservationStatus status = ReservationStatus.ACTIVE;
     @Column(name = "canceled_at")
     private LocalDateTime canceledAt = null;
+    @Column(name = "price_czk")
+    private BigDecimal priceCzk;
 
-    public Reservation(Long id, ScheduledTrip scheduledTrip, String passengerEmail, Seat seat, AppUser user) {
+    public Reservation(Long id, ScheduledTrip scheduledTrip, String passengerEmail, Seat seat, AppUser user, BigDecimal priceCzk) {
         this.id = id;
         this.scheduledTrip = scheduledTrip;
         this.passengerEmail = passengerEmail;
         this.seat = seat;
         this.bookedAt = LocalDateTime.now();
         this.user = user;
+        this.priceCzk = priceCzk;
     }
 }
