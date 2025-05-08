@@ -18,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.*;
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +31,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ScheduledTripServiceTest {
-    private final Route route = new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4));
+    private final Route route = new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN);
     private final ScheduledTrip scheduledTrip1 = new ScheduledTrip(route, new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 11, 0));
     private final ScheduledTrip scheduledTrip2 = new ScheduledTrip(route, new Bus("102", 3), LocalDateTime.of(2025, 1, 8, 11, 0));
     private final ScheduledTrip scheduledTrip3 = new ScheduledTrip(route, new Bus("101", 5), LocalDateTime.of(2025, 1, 15, 11, 0));

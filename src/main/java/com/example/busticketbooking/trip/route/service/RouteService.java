@@ -2,6 +2,7 @@ package com.example.busticketbooking.trip.route.service;
 
 import com.example.busticketbooking.shared.exception.AlreadyExistsException;
 import com.example.busticketbooking.shared.exception.NotFoundException;
+import com.example.busticketbooking.shared.exception.RouteNotFoundException;
 import com.example.busticketbooking.trip.route.city.entity.City;
 import com.example.busticketbooking.trip.route.city.repository.CityRepository;
 import com.example.busticketbooking.trip.route.dto.RouteRequest;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;
 
@@ -57,5 +59,15 @@ public class RouteService {
         return routes.stream()
                 .map(routeMapper::toResponseDto)
                 .toList();
+    }
+
+    public RouteResponse updateBasePrice(long id, BigDecimal basePrice) {
+        Route route = routeRepository.findById(id).orElseThrow(() -> new RouteNotFoundException(id));
+
+        route.setBasePriceCzk(basePrice);
+        Route updatedRoute = routeRepository.save(route);
+        log.info("Base price for route with id {} updated to {}", id, basePrice);
+
+        return routeMapper.toResponseDto(updatedRoute);
     }
 }

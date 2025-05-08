@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 
 @Entity
@@ -27,4 +28,6 @@ public class Route {
     private Double distance;
     @Column(name = "duration")
     private Duration duration;
+    @Column(name = "base_price_czk", nullable = false)
+    private BigDecimal basePriceCzk;
 }

@@ -1,6 +1,7 @@
 package com.example.busticketbooking.reservation.service;
 
 import com.example.busticketbooking.bus.entity.Bus;
+import com.example.busticketbooking.pricing.service.PricingService;
 import com.example.busticketbooking.reservation.dto.ReservationRequest;
 import com.example.busticketbooking.reservation.dto.ReservationResponse;
 import com.example.busticketbooking.reservation.entity.Reservation;
@@ -33,6 +34,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -56,6 +58,8 @@ class ReservationServiceTest {
     @Mock
     private SeatService seatService;
     @Mock
+    private PricingService pricingService;
+    @Mock
     private UserRepository userRepository;
     @Mock
     private ReservationMapper reservationMapper;
@@ -78,10 +82,10 @@ class ReservationServiceTest {
         ReservationRequest request = new ReservationRequest(1L, 1, "test@test.com");
         Bus bus = new Bus("99", 5);
         LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), bus, departureDateTime);
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime);
         Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip, 1);
-        Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, departureDateTime, null, ReservationStatus.ACTIVE, null);
-        ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com");
+        Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, departureDateTime, null, ReservationStatus.ACTIVE, null, BigDecimal.TEN);
+        ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com", ReservationStatus.ACTIVE, BigDecimal.TEN);
         LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
         Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
 
@@ -89,6 +93,7 @@ class ReservationServiceTest {
         when(clock.getZone()).thenReturn(Constant.ZONE_PRAGUE);
         when(scheduledTripRepository.findById(1L)).thenReturn(Optional.of(scheduledTrip));
         when(seatService.reserveSeat(request.seatNumber(), scheduledTrip)).thenReturn(seat);
+        when(pricingService.calculatePrice(scheduledTrip, null)).thenReturn(BigDecimal.TEN);
         when(reservationRepository.save(any(Reservation.class))).thenReturn(createdReservation);
         when(reservationMapper.toResponseDto(createdReservation)).thenReturn(response);
 
@@ -99,6 +104,8 @@ class ReservationServiceTest {
         assertThat(result.getDepartureDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 11, 0, 0));
         assertThat(result.getSeatNumber()).isEqualTo(1);
         assertThat(result.getPassengerEmail()).isEqualTo("test@test.com");
+        assertThat(result.getStatus()).isEqualTo(ReservationStatus.ACTIVE);
+        assertThat(result.getPriceCzk()).isEqualTo(BigDecimal.TEN);
         verify(scheduledTripRepository, times(1)).findById(anyLong());
         verify(reservationRepository, times(1)).save(any(Reservation.class));
         verify(seatService, times(1)).reserveSeat(anyInt(), any(ScheduledTrip.class));
@@ -111,10 +118,10 @@ class ReservationServiceTest {
         AppUser user = createUser();
         Bus bus = new Bus("99", 5);
         LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), bus, departureDateTime);
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime);
         Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip, 1);
-        Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, null);
-        ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com");
+        Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, null, BigDecimal.TEN);
+        ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com", ReservationStatus.ACTIVE, BigDecimal.TEN);
         LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
         Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
 
@@ -126,8 +133,9 @@ class ReservationServiceTest {
         SecurityContextHolder.setContext(securityContext);
         when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
         when(scheduledTripRepository.findById(1L)).thenReturn(Optional.of(scheduledTrip));
-        when(reservationRepository.save(any(Reservation.class))).thenReturn(createdReservation);
         when(seatService.reserveSeat(request.seatNumber(), scheduledTrip)).thenReturn(seat);
+        when(pricingService.calculatePrice(scheduledTrip, user)).thenReturn(BigDecimal.TEN);
+        when(reservationRepository.save(any(Reservation.class))).thenReturn(createdReservation);
         when(reservationMapper.toResponseDto(createdReservation)).thenReturn(response);
 
         ReservationResponse result = service.createReservation(request);
@@ -137,6 +145,8 @@ class ReservationServiceTest {
         assertThat(result.getDepartureDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 11, 0, 0));
         assertThat(result.getSeatNumber()).isEqualTo(1);
         assertThat(result.getPassengerEmail()).isEqualTo("test@test.com");
+        assertThat(result.getStatus()).isEqualTo(ReservationStatus.ACTIVE);
+        assertThat(result.getPriceCzk()).isEqualTo(BigDecimal.TEN);
     }
 
     @Test
@@ -153,7 +163,7 @@ class ReservationServiceTest {
         ReservationRequest request = new ReservationRequest(1L, 99, "test@test.com");
         Bus bus = new Bus("99", 5);
         LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), bus, departureDateTime);
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime);
 
         when(scheduledTripRepository.findById(1L)).thenReturn(Optional.of(scheduledTrip));
         when(seatService.reserveSeat(request.seatNumber(), scheduledTrip)).thenThrow(SeatNotAvailableException.class);
@@ -166,7 +176,7 @@ class ReservationServiceTest {
         ReservationRequest request = new ReservationRequest(1L, 1, "test@test.com");
         Bus bus = new Bus("99", 5);
         LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), bus, departureDateTime);
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime);
 
         when(scheduledTripRepository.findById(1L)).thenReturn(Optional.of(scheduledTrip));
         when(seatService.reserveSeat(request.seatNumber(), scheduledTrip)).thenThrow(OptimisticLockException.class);
@@ -179,7 +189,7 @@ class ReservationServiceTest {
         AppUser user = createUser();
 
         when(reservationRepository.findAllByUser(user)).thenReturn(List.of(new Reservation()));
-        when(reservationMapper.toResponseDto(any(Reservation.class))).thenReturn(new ReservationResponse("Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0), 1, "test@test.com"));
+        when(reservationMapper.toResponseDto(any(Reservation.class))).thenReturn(new ReservationResponse("Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0), 1, "test@test.com", ReservationStatus.ACTIVE, BigDecimal.TEN));
 
         var result = service.getUsersReservations(user);
 
@@ -189,6 +199,8 @@ class ReservationServiceTest {
         assertThat(result.getFirst().getDepartureDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 11, 0));
         assertThat(result.getFirst().getSeatNumber()).isEqualTo(1);
         assertThat(result.getFirst().getPassengerEmail()).isEqualTo("test@test.com");
+        assertThat(result.getFirst().getStatus()).isEqualTo(ReservationStatus.ACTIVE);
+        assertThat(result.getFirst().getPriceCzk()).isEqualTo(BigDecimal.TEN);
     }
 
     @Test
@@ -203,7 +215,7 @@ class ReservationServiceTest {
     @Test
     void cancelReservation_validRequest_reservationCancelled() {
         AppUser user = createUser();
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 11, 0));
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 11, 0));
         Reservation reservation = new Reservation();
         reservation.setId(1L);
         reservation.setUser(user);
@@ -257,7 +269,7 @@ class ReservationServiceTest {
     @Test
     void cancelReservation_tooLateForCancellation_shouldThrowException() {
         AppUser user = createUser();
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4)), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 11, 0));
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 11, 0));
         Reservation reservation = new Reservation();
         reservation.setId(1L);
         reservation.setUser(user);

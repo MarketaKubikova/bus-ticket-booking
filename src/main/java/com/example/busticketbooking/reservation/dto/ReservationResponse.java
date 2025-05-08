@@ -1,10 +1,12 @@
 package com.example.busticketbooking.reservation.dto;
 
+import com.example.busticketbooking.reservation.model.ReservationStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @AllArgsConstructor
@@ -17,4 +19,6 @@ public class ReservationResponse {
     private LocalDateTime departureDateTime;
     private int seatNumber;
     private String passengerEmail;
+    private ReservationStatus status;
+    private BigDecimal priceCzk;
 }

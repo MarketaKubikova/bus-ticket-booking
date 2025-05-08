@@ -3,6 +3,7 @@ package com.example.busticketbooking.trip.route.controller;
 import com.example.busticketbooking.shared.exception.AlreadyExistsException;
 import com.example.busticketbooking.shared.exception.GlobalExceptionHandler;
 import com.example.busticketbooking.shared.exception.NotFoundException;
+import com.example.busticketbooking.shared.exception.RouteNotFoundException;
 import com.example.busticketbooking.trip.route.dto.RouteRequest;
 import com.example.busticketbooking.trip.route.dto.RouteResponse;
 import com.example.busticketbooking.trip.route.service.RouteService;
@@ -17,12 +18,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,28 +44,29 @@ class RouteControllerIntegrationTest {
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void createRoute_withAdminRoleAndValidRequest_shouldReturnRouteResponse() throws Exception {
-        when(routeService.createRoute(new RouteRequest("Prague", "Vienna", 334.0, "04:00")))
-                .thenReturn(new RouteResponse("Prague", "Vienna", 334.0, Duration.ofHours(4)));
+        when(routeService.createRoute(any(RouteRequest.class)))
+                .thenReturn(new RouteResponse("Prague", "Vienna", 334.0, Duration.ofHours(4), BigDecimal.TEN));
 
         mockMvc.perform(post(BASE_URL)
                         .contentType("application/json")
-                        .content("{\"origin\": \"Prague\", \"destination\": \"Vienna\", \"distance\": 334.0, \"duration\": \"04:00\"}"))
+                        .content("{\"origin\": \"Prague\", \"destination\": \"Vienna\", \"distance\": 334.0, \"duration\": \"04:00\", \"basePriceCzk\": 10.0}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.origin").value("Prague"))
                 .andExpect(jsonPath("$.destination").value("Vienna"))
                 .andExpect(jsonPath("$.distance").value(334.0))
-                .andExpect(jsonPath("$.duration").value("PT4H"));
+                .andExpect(jsonPath("$.duration").value("PT4H"))
+                .andExpect(jsonPath("$.basePriceCzk").value(10.0));
     }
 
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void createRoute_withAdminRoleAndExistingRoute_shouldReturnConflict() throws Exception {
-        when(routeService.createRoute(new RouteRequest("Prague", "Vienna", 334.0, "04:00")))
+        when(routeService.createRoute(any(RouteRequest.class)))
                 .thenThrow(new AlreadyExistsException("Route already exists"));
 
         mockMvc.perform(post(BASE_URL)
                         .contentType("application/json")
-                        .content("{\"origin\": \"Prague\", \"destination\": \"Vienna\", \"distance\": 334.0, \"duration\": \"04:00\"}"))
+                        .content("{\"origin\": \"Prague\", \"destination\": \"Vienna\", \"distance\": 334.0, \"duration\": \"04:00\", \"basePriceCzk\": 10.0}"))
                 .andExpect(status().isConflict());
     }
 
@@ -80,7 +84,7 @@ class RouteControllerIntegrationTest {
     void createRoute_withoutAdminRole_shouldReturnForbidden() throws Exception {
         mockMvc.perform(post(BASE_URL)
                         .contentType("application/json")
-                        .content("{\"origin\": \"Prague\", \"destination\": \"Vienna\", \"distance\": 334.0, \"duration\": \"04:00\"}"))
+                        .content("{\"origin\": \"Prague\", \"destination\": \"Vienna\", \"distance\": 334.0, \"duration\": \"04:00\", \"basePriceCzk\": 10.0}"))
                 .andExpect(status().isForbidden());
     }
 
@@ -88,7 +92,7 @@ class RouteControllerIntegrationTest {
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void getAllRoutes_withAdminRole_shouldReturnRouteList() throws Exception {
         when(routeService.getAllRoutes())
-                .thenReturn(List.of(new RouteResponse("Prague", "Vienna", 334.0, Duration.ofHours(4))));
+                .thenReturn(List.of(new RouteResponse("Prague", "Vienna", 334.0, Duration.ofHours(4), BigDecimal.TEN)));
 
         mockMvc.perform(get(BASE_URL))
                 .andExpect(status().isOk())
@@ -96,7 +100,8 @@ class RouteControllerIntegrationTest {
                 .andExpect(jsonPath("$[0].origin").value("Prague"))
                 .andExpect(jsonPath("$[0].destination").value("Vienna"))
                 .andExpect(jsonPath("$[0].distance").value(334.0))
-                .andExpect(jsonPath("$[0].duration").value("PT4H"));
+                .andExpect(jsonPath("$[0].duration").value("PT4H"))
+                .andExpect(jsonPath("$[0].basePriceCzk").value(10.0));
     }
 
     @Test
@@ -120,5 +125,50 @@ class RouteControllerIntegrationTest {
         mockMvc.perform(get(BASE_URL)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer token"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void updateBasePrice_withAdminRoleAndValidRequest_shouldReturnRouteResponse() throws Exception {
+        when(routeService.updateBasePrice(anyLong(), any(BigDecimal.class)))
+                .thenReturn(new RouteResponse("Prague", "Vienna", 334.0, Duration.ofHours(4), BigDecimal.valueOf(12.50)));
+
+        mockMvc.perform(patch(BASE_URL + "/1/base-price")
+                        .contentType("application/json")
+                        .content("12.50"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.origin").value("Prague"))
+                .andExpect(jsonPath("$.destination").value("Vienna"))
+                .andExpect(jsonPath("$.distance").value(334.0))
+                .andExpect(jsonPath("$.duration").value("PT4H"))
+                .andExpect(jsonPath("$.basePriceCzk").value(12.50));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void updateBasePrice_withAdminRoleAndInvalidRouteId_shouldReturnNotFound() throws Exception {
+        when(routeService.updateBasePrice(anyLong(), any(BigDecimal.class)))
+                .thenThrow(RouteNotFoundException.class);
+
+        mockMvc.perform(patch(BASE_URL + "/99/base-price")
+                        .contentType("application/json")
+                        .content("12.50"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void updateBasePrice_withAdminRoleAndInvalidRequest_shouldReturnBadRequest() throws Exception {
+        mockMvc.perform(patch(BASE_URL + "/1/base-price")
+                        .contentType("application/json")
+                        .content("-12.50"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void updateBasePrice_withAdminRoleAndMissingRequest() throws Exception {
+        mockMvc.perform(patch(BASE_URL + "/1/base-price"))
+                .andExpect(status().isBadRequest());
     }
 }

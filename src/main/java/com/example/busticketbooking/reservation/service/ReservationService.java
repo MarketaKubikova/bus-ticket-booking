@@ -1,5 +1,6 @@
 package com.example.busticketbooking.reservation.service;
 
+import com.example.busticketbooking.pricing.service.PricingService;
 import com.example.busticketbooking.reservation.dto.ReservationRequest;
 import com.example.busticketbooking.reservation.dto.ReservationResponse;
 import com.example.busticketbooking.reservation.entity.Reservation;
@@ -27,6 +28,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -40,6 +42,7 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final ScheduledTripRepository scheduledTripRepository;
     private final SeatService seatService;
+    private final PricingService pricingService;
     private final ReservationMapper reservationMapper;
     private final UserRepository userRepository;
     private final Clock clock;
@@ -58,6 +61,7 @@ public class ReservationService {
             throw new SeatNotAvailableException(request.seatNumber());
         }
 
+
         Reservation reservation = new Reservation();
         reservation.setScheduledTrip(scheduledTrip);
         reservation.setSeat(seat);
@@ -74,6 +78,9 @@ public class ReservationService {
             reservation.setUser(null);
             reservation.setPassengerEmail(request.passengerEmail());
         }
+
+        BigDecimal price = pricingService.calculatePrice(scheduledTrip, currentUser);
+        reservation.setPriceCzk(price);
 
         Reservation savedReservation = reservationRepository.save(reservation);
 
