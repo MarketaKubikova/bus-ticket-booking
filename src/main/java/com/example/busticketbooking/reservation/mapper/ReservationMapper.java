@@ -13,5 +13,6 @@ public interface ReservationMapper {
     @Mapping(target = "seatNumber", source = "entity.seat.seatNumber")
     @Mapping(target = "status", source = "entity.status")
     @Mapping(target = "priceCzk", source = "entity.priceCzk")
+    @Mapping(target = "tariff", source = "entity.tariff")
     ReservationResponse toResponseDto(Reservation entity);
 }

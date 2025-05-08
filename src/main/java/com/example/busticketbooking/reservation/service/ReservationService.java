@@ -66,6 +66,7 @@ public class ReservationService {
         reservation.setScheduledTrip(scheduledTrip);
         reservation.setSeat(seat);
         reservation.setBookedAt(LocalDateTime.now(clock));
+        reservation.setTariff(request.tariff());
 
         AppUser currentUser = getCurrentAuthenticatedUser();
         if (currentUser != null) {
@@ -79,7 +80,7 @@ public class ReservationService {
             reservation.setPassengerEmail(request.passengerEmail());
         }
 
-        BigDecimal price = pricingService.calculatePrice(scheduledTrip, currentUser);
+        BigDecimal price = pricingService.calculatePrice(scheduledTrip, currentUser, request.tariff());
         reservation.setPriceCzk(price);
 
         Reservation savedReservation = reservationRepository.save(reservation);
