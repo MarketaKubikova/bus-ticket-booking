@@ -16,15 +16,11 @@ import com.example.busticketbooking.trip.repository.ScheduledTripRepository;
 import com.example.busticketbooking.trip.seat.entity.Seat;
 import com.example.busticketbooking.trip.seat.service.SeatService;
 import com.example.busticketbooking.user.entity.AppUser;
-import com.example.busticketbooking.user.repository.UserRepository;
+import com.example.busticketbooking.user.service.UserService;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,7 +40,7 @@ public class ReservationService {
     private final SeatService seatService;
     private final PricingService pricingService;
     private final ReservationMapper reservationMapper;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final Clock clock;
 
     @Transactional
@@ -68,7 +64,7 @@ public class ReservationService {
         reservation.setBookedAt(LocalDateTime.now(clock));
         reservation.setTariff(request.tariff());
 
-        AppUser currentUser = getCurrentAuthenticatedUser();
+        AppUser currentUser = userService.getCurrentAuthenticatedUser();
         if (currentUser != null) {
             reservation.setUser(currentUser);
             reservation.setPassengerEmail(currentUser.getEmail());
@@ -124,17 +120,5 @@ public class ReservationService {
         seatService.releaseSeat(reservation.getSeat());
 
         log.info("Reservation with id '{}' successfully cancelled at {}", reservationId, reservation.getCanceledAt());
-    }
-
-    private AppUser getCurrentAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()
-                || authentication instanceof AnonymousAuthenticationToken) {
-            return null;
-        }
-        String username = authentication.getName();
-
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 }

@@ -2,6 +2,8 @@ package com.example.busticketbooking.trip.service;
 
 import com.example.busticketbooking.bus.entity.Bus;
 import com.example.busticketbooking.bus.repository.BusRepository;
+import com.example.busticketbooking.pricing.service.PricingService;
+import com.example.busticketbooking.reservation.model.Tariff;
 import com.example.busticketbooking.shared.exception.NoTripCreatedException;
 import com.example.busticketbooking.shared.exception.NotFoundException;
 import com.example.busticketbooking.shared.exception.RouteNotFoundException;
@@ -11,10 +13,13 @@ import com.example.busticketbooking.trip.entity.ScheduledTrip;
 import com.example.busticketbooking.trip.repository.ScheduledTripRepository;
 import com.example.busticketbooking.trip.route.entity.Route;
 import com.example.busticketbooking.trip.route.repository.RouteRepository;
+import com.example.busticketbooking.user.entity.AppUser;
+import com.example.busticketbooking.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -26,8 +31,10 @@ public class ScheduledTripService {
     private final ScheduledTripRepository scheduledTripRepository;
     private final RouteRepository routeRepository;
     private final BusRepository busRepository;
+    private final PricingService pricingService;
+    private final UserService userService;
 
-    public List<ScheduledTripResponse> getScheduledTripsByRouteAndDepartureDate(String origin, String destination, LocalDate date) {
+    public List<ScheduledTripResponse> getScheduledTripsByRouteAndDepartureDate(String origin, String destination, LocalDate date, Tariff tariff) {
         Route route = getRoute(origin, destination);
         if (date == null) {
             log.info("Date is not filled, using the current date");
@@ -48,12 +55,13 @@ public class ScheduledTripService {
                         entity.getRoute().getDestination().getName(),
                         entity.getDepartureDateTime(),
                         entity.getArrivalDateTime(),
-                        entity.getAvailableSeatsForReservation().size()
+                        entity.getAvailableSeatsForReservation().size(),
+                        getPriceForTrip(entity, tariff)
                 ))
                 .toList();
     }
 
-    public List<ScheduledTripResponse> generateScheduledTripsByRule(ScheduledTripRequest request) {
+    public int generateScheduledTripsByRule(ScheduledTripRequest request) {
         Bus bus = busRepository.findByBusNumber(request.busNumber()).orElseThrow(() -> {
             log.error("Bus not found: {}", request.busNumber());
             return new NotFoundException("Bus " + request.busNumber() + " not found");
@@ -74,16 +82,7 @@ public class ScheduledTripService {
 
         List<ScheduledTrip> savedTrips = scheduledTripRepository.saveAll(tripsToSave);
 
-        return savedTrips.stream()
-                .map(entity -> new ScheduledTripResponse(
-                        entity.getBus().getBusNumber(),
-                        entity.getRoute().getOrigin().getName(),
-                        entity.getRoute().getDestination().getName(),
-                        entity.getDepartureDateTime(),
-                        entity.getArrivalDateTime(),
-                        entity.getAvailableSeatsForReservation().size()
-                ))
-                .toList();
+        return savedTrips.size();
     }
 
     private Route getRoute(String origin, String destination) {
@@ -92,5 +91,11 @@ public class ScheduledTripService {
                     log.error("Route not found: {} to {}", origin, destination);
                     return new RouteNotFoundException(origin, destination);
                 });
+    }
+
+    private BigDecimal getPriceForTrip(ScheduledTrip scheduledTrip, Tariff tariff) {
+        AppUser currentUser = userService.getCurrentAuthenticatedUser();
+
+        return pricingService.calculatePrice(scheduledTrip, currentUser, tariff);
     }
 }

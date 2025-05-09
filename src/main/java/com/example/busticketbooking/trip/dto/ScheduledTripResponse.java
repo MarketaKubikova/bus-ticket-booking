@@ -1,5 +1,6 @@
 package com.example.busticketbooking.trip.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record ScheduledTripResponse(
@@ -8,6 +9,7 @@ public record ScheduledTripResponse(
         String destination,
         LocalDateTime departureDateTime,
         LocalDateTime arrivalDateTime,
-        int availableSeats
+        int availableSeats,
+        BigDecimal priceCzk
 ) {
 }
