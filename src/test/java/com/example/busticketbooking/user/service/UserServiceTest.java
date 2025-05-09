@@ -9,6 +9,7 @@ import com.example.busticketbooking.user.dto.AuthResponse;
 import com.example.busticketbooking.user.dto.LoginRequest;
 import com.example.busticketbooking.user.dto.RegisterRequest;
 import com.example.busticketbooking.user.entity.AppUser;
+import com.example.busticketbooking.user.model.Role;
 import com.example.busticketbooking.user.repository.UserRepository;
 import io.github.bucket4j.Bucket;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,8 +20,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.HashSet;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -49,6 +55,8 @@ class UserServiceTest {
     private LoginRateLimiter rateLimiter;
     @Mock
     private Bucket bucket;
+    @Mock
+    private SecurityContext securityContext;
     @InjectMocks
     private UserService userService;
 
@@ -107,5 +115,39 @@ class UserServiceTest {
         when(bucket.tryConsume(anyLong())).thenReturn(false);
 
         assertThrows(TooManyRequestsException.class, () -> userService.login(request, servletRequest));
+    }
+
+    @Test
+    void getCurrentAuthenticatedUser_userLoggedIn_shouldReturnUser() {
+        AppUser user = new AppUser();
+        user.setId(1L);
+        user.setUsername("user");
+        user.setEmail("test@test.com");
+        user.setPassword("password");
+        user.setRole(Role.USER);
+        user.setReservations(new HashSet<>());
+
+        when(authentication.getName()).thenReturn(user.getUsername());
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+
+        AppUser result = userService.getCurrentAuthenticatedUser();
+
+        assertThat(result).isNotNull();
+        verify(userRepository, times(1)).findByUsername(anyString());
+    }
+
+    @Test
+    void getCurrentAuthenticatedUser_userNotLoggedIn_shouldReturnNull() {
+        when(authentication.isAuthenticated()).thenReturn(false);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        AppUser user = userService.getCurrentAuthenticatedUser();
+
+        assertThat(user).isNull();
+        verifyNoInteractions(userRepository);
     }
 }

@@ -1,5 +1,6 @@
 package com.example.busticketbooking.trip.controller;
 
+import com.example.busticketbooking.reservation.model.Tariff;
 import com.example.busticketbooking.trip.dto.ScheduledTripRequest;
 import com.example.busticketbooking.trip.dto.ScheduledTripResponse;
 import com.example.busticketbooking.trip.service.ScheduledTripService;
@@ -26,17 +27,18 @@ public class ScheduledTripController {
     @GetMapping("/search")
     public ResponseEntity<List<ScheduledTripResponse>> searchScheduledTrips(@RequestParam("from") @NotNull String origin,
                                                                             @RequestParam("to") @NotNull String destination,
-                                                                            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        List<ScheduledTripResponse> response = scheduledTripService.getScheduledTripsByRouteAndDepartureDate(origin, destination, date);
+                                                                            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                                                                            @RequestBody @Valid Tariff tariff) {
+        List<ScheduledTripResponse> response = scheduledTripService.getScheduledTripsByRouteAndDepartureDate(origin, destination, date, tariff);
 
         return ResponseEntity.ok(response);
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<ScheduledTripResponse>> createScheduledTrip(@RequestBody @Valid ScheduledTripRequest request) {
-        List<ScheduledTripResponse> createdScheduledTrip = scheduledTripService.generateScheduledTripsByRule(request);
+    public ResponseEntity<String> createScheduledTrip(@RequestBody @Valid ScheduledTripRequest request) {
+        int createdScheduledTrips = scheduledTripService.generateScheduledTripsByRule(request);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdScheduledTrip);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Successfully created " + createdScheduledTrips + " scheduled trips");
     }
 }

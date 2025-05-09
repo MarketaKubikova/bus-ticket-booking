@@ -23,17 +23,13 @@ import com.example.busticketbooking.trip.seat.model.SeatStatus;
 import com.example.busticketbooking.trip.seat.service.SeatService;
 import com.example.busticketbooking.user.entity.AppUser;
 import com.example.busticketbooking.user.model.Role;
-import com.example.busticketbooking.user.repository.UserRepository;
+import com.example.busticketbooking.user.service.UserService;
 import jakarta.persistence.OptimisticLockException;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -61,22 +57,13 @@ class ReservationServiceTest {
     @Mock
     private PricingService pricingService;
     @Mock
-    private UserRepository userRepository;
+    private UserService userService;
     @Mock
     private ReservationMapper reservationMapper;
-    @Mock
-    private Authentication authentication;
-    @Mock
-    private SecurityContext securityContext;
     @Mock
     private Clock clock;
     @InjectMocks
     private ReservationService service;
-
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
-    }
 
     @Test
     void createReservation_validRequestNonLoggedInUser_reservationCreated() {
@@ -94,6 +81,7 @@ class ReservationServiceTest {
         when(clock.getZone()).thenReturn(Constant.ZONE_PRAGUE);
         when(scheduledTripRepository.findById(1L)).thenReturn(Optional.of(scheduledTrip));
         when(seatService.reserveSeat(request.seatNumber(), scheduledTrip)).thenReturn(seat);
+        when(userService.getCurrentAuthenticatedUser()).thenReturn(null);
         when(pricingService.calculatePrice(scheduledTrip, null, Tariff.ADULT)).thenReturn(BigDecimal.TEN);
         when(reservationRepository.save(any(Reservation.class))).thenReturn(createdReservation);
         when(reservationMapper.toResponseDto(createdReservation)).thenReturn(response);
@@ -129,11 +117,7 @@ class ReservationServiceTest {
 
         when(clock.instant()).thenReturn(instant);
         when(clock.getZone()).thenReturn(Constant.ZONE_PRAGUE);
-        when(authentication.getName()).thenReturn(user.getUsername());
-        when(authentication.isAuthenticated()).thenReturn(true);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
-        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+        when(userService.getCurrentAuthenticatedUser()).thenReturn(user);
         when(scheduledTripRepository.findById(1L)).thenReturn(Optional.of(scheduledTrip));
         when(seatService.reserveSeat(request.seatNumber(), scheduledTrip)).thenReturn(seat);
         when(pricingService.calculatePrice(scheduledTrip, user, Tariff.ADULT)).thenReturn(BigDecimal.TEN);
