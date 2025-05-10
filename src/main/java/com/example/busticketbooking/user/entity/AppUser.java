@@ -1,5 +1,6 @@
 package com.example.busticketbooking.user.entity;
 
+import com.example.busticketbooking.payment.entity.Wallet;
 import com.example.busticketbooking.reservation.entity.Reservation;
 import com.example.busticketbooking.user.model.Role;
 import jakarta.persistence.*;
@@ -33,6 +34,8 @@ public class AppUser implements UserDetails, Serializable {
     private Role role;
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Reservation> reservations;
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private Wallet wallet;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
