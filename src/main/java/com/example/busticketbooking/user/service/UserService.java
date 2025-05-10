@@ -1,5 +1,6 @@
 package com.example.busticketbooking.user.service;
 
+import com.example.busticketbooking.payment.service.WalletService;
 import com.example.busticketbooking.shared.config.PasswordConfig;
 import com.example.busticketbooking.shared.exception.AlreadyExistsException;
 import com.example.busticketbooking.shared.exception.TooManyRequestsException;
@@ -23,6 +24,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -33,10 +35,12 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordConfig passwordConfig;
     private final JwtService jwtService;
+    private final WalletService walletService;
     private final AuthenticationManager authenticationManager;
     @Value("${rate.limit.login.tokenCost}")
     private int tokenCost;
 
+    @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByUsername(request.email())) {
             throw new AlreadyExistsException("User with username '" + request.email() + "' already exists");
@@ -47,9 +51,10 @@ public class UserService {
         user.setPassword(passwordConfig.passwordEncoder().encode(request.password()));
         user.setEmail(request.email());
         user.setRole(Role.USER);
+        user.setWallet(walletService.createWallet(user));
 
-        AppUser saved = userRepository.save(user);
-        String token = jwtService.generateToken(saved);
+        AppUser savedUser = userRepository.save(user);
+        String token = jwtService.generateToken(savedUser);
 
         return new AuthResponse(token);
     }
