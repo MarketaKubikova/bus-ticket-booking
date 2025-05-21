@@ -1,5 +1,7 @@
 package com.example.busticketbooking.user.service;
 
+import com.example.busticketbooking.payment.entity.Wallet;
+import com.example.busticketbooking.payment.service.WalletService;
 import com.example.busticketbooking.shared.config.PasswordConfig;
 import com.example.busticketbooking.shared.exception.AlreadyExistsException;
 import com.example.busticketbooking.shared.exception.TooManyRequestsException;
@@ -57,17 +59,21 @@ class UserServiceTest {
     private Bucket bucket;
     @Mock
     private SecurityContext securityContext;
+    @Mock
+    private WalletService walletService;
     @InjectMocks
     private UserService userService;
 
     @Test
     void register_validRequest_shouldReturnAuthResponse() {
+        Wallet wallet = new Wallet();
         RegisterRequest request = new RegisterRequest("testuser", "password");
 
         when(userRepository.existsByUsername("testuser")).thenReturn(false);
         when(passwordConfig.passwordEncoder()).thenReturn(passwordEncoder);
         when(passwordEncoder.encode("password")).thenReturn("encoded-password");
         when(userRepository.save(any(AppUser.class))).thenReturn(new AppUser());
+        when(walletService.createWallet(any(AppUser.class))).thenReturn(wallet);
         when(jwtService.generateToken(any(AppUser.class))).thenReturn("generated-token");
 
         AuthResponse response = userService.register(request);
@@ -75,7 +81,8 @@ class UserServiceTest {
         assertThat(response.token()).isEqualTo("generated-token");
         verify(userRepository, times(1)).existsByUsername(anyString());
         verify(passwordEncoder, times(1)).encode(anyString());
-        verify(userRepository, times(1)).save(any(AppUser.class));
+        verify(userRepository, times(2)).save(any(AppUser.class));
+        verify(walletService, times(1)).createWallet(any(AppUser.class));
         verify(jwtService, times(1)).generateToken(any(AppUser.class));
     }
 

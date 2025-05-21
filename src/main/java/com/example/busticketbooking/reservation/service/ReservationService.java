@@ -57,7 +57,6 @@ public class ReservationService {
             throw new SeatNotAvailableException(request.seatNumber());
         }
 
-
         Reservation reservation = new Reservation();
         reservation.setScheduledTrip(scheduledTrip);
         reservation.setSeat(seat);
@@ -100,8 +99,7 @@ public class ReservationService {
 
     @Transactional
     public void cancelReservation(Long reservationId, @NotNull AppUser user) {
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new NotFoundException("Reservation with ID '" + reservationId + "' not found"));
+        Reservation reservation = getReservationById(reservationId);
 
         if (!reservation.getUser().equals(user)) {
             log.error("User with ID '{}' is trying to cancel a reservation that does not belong to them", user.getId());
@@ -120,5 +118,14 @@ public class ReservationService {
         seatService.releaseSeat(reservation.getSeat());
 
         log.info("Reservation with id '{}' successfully cancelled at {}", reservationId, reservation.getCanceledAt());
+    }
+
+    public Reservation getReservationById(Long reservationId) {
+        return reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new NotFoundException("Reservation with ID '" + reservationId + "' not found"));
+    }
+
+    public void saveReservation(Reservation reservation) {
+        reservationRepository.save(reservation);
     }
 }

@@ -72,8 +72,8 @@ class ReservationServiceTest {
         LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
         ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime);
         Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip, 1);
-        Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, departureDateTime, null, ReservationStatus.ACTIVE, null, BigDecimal.TEN, Tariff.ADULT);
-        ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com", ReservationStatus.ACTIVE, BigDecimal.TEN, Tariff.ADULT);
+        Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, departureDateTime, null, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT);
+        ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com", ReservationStatus.RESERVED, BigDecimal.TEN, Tariff.ADULT);
         LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
         Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
 
@@ -93,7 +93,7 @@ class ReservationServiceTest {
         assertThat(result.getDepartureDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 11, 0, 0));
         assertThat(result.getSeatNumber()).isEqualTo(1);
         assertThat(result.getPassengerEmail()).isEqualTo("test@test.com");
-        assertThat(result.getStatus()).isEqualTo(ReservationStatus.ACTIVE);
+        assertThat(result.getStatus()).isEqualTo(ReservationStatus.RESERVED);
         assertThat(result.getPriceCzk()).isEqualTo(BigDecimal.TEN);
         assertThat(result.getTariff()).isEqualTo(Tariff.ADULT);
         verify(scheduledTripRepository, times(1)).findById(anyLong());
@@ -111,7 +111,7 @@ class ReservationServiceTest {
         ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime);
         Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip, 1);
         Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, null, BigDecimal.TEN);
-        ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com", ReservationStatus.ACTIVE, BigDecimal.TEN, Tariff.ADULT);
+        ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com", ReservationStatus.RESERVED, BigDecimal.TEN, Tariff.ADULT);
         LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
         Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
 
@@ -131,7 +131,7 @@ class ReservationServiceTest {
         assertThat(result.getDepartureDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 11, 0, 0));
         assertThat(result.getSeatNumber()).isEqualTo(1);
         assertThat(result.getPassengerEmail()).isEqualTo("test@test.com");
-        assertThat(result.getStatus()).isEqualTo(ReservationStatus.ACTIVE);
+        assertThat(result.getStatus()).isEqualTo(ReservationStatus.RESERVED);
         assertThat(result.getPriceCzk()).isEqualTo(BigDecimal.TEN);
         assertThat(result.getTariff()).isEqualTo(Tariff.ADULT);
     }
@@ -176,7 +176,7 @@ class ReservationServiceTest {
         AppUser user = createUser();
 
         when(reservationRepository.findAllByUser(user)).thenReturn(List.of(new Reservation()));
-        when(reservationMapper.toResponseDto(any(Reservation.class))).thenReturn(new ReservationResponse("Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0), 1, "test@test.com", ReservationStatus.ACTIVE, BigDecimal.TEN, Tariff.ADULT));
+        when(reservationMapper.toResponseDto(any(Reservation.class))).thenReturn(new ReservationResponse("Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0), 1, "test@test.com", ReservationStatus.RESERVED, BigDecimal.TEN, Tariff.ADULT));
 
         var result = service.getUsersReservations(user);
 
@@ -186,7 +186,7 @@ class ReservationServiceTest {
         assertThat(result.getFirst().getDepartureDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 11, 0));
         assertThat(result.getFirst().getSeatNumber()).isEqualTo(1);
         assertThat(result.getFirst().getPassengerEmail()).isEqualTo("test@test.com");
-        assertThat(result.getFirst().getStatus()).isEqualTo(ReservationStatus.ACTIVE);
+        assertThat(result.getFirst().getStatus()).isEqualTo(ReservationStatus.RESERVED);
         assertThat(result.getFirst().getPriceCzk()).isEqualTo(BigDecimal.TEN);
     }
 
@@ -207,7 +207,7 @@ class ReservationServiceTest {
         reservation.setId(1L);
         reservation.setUser(user);
         reservation.setScheduledTrip(scheduledTrip);
-        reservation.setStatus(ReservationStatus.ACTIVE);
+        reservation.setStatus(ReservationStatus.RESERVED);
         reservation.setSeat(new Seat(1, scheduledTrip));
         LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 8, 0);
         Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
@@ -261,7 +261,7 @@ class ReservationServiceTest {
         reservation.setId(1L);
         reservation.setUser(user);
         reservation.setScheduledTrip(scheduledTrip);
-        reservation.setStatus(ReservationStatus.ACTIVE);
+        reservation.setStatus(ReservationStatus.RESERVED);
         reservation.setSeat(new Seat(1, scheduledTrip));
         LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
         Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
@@ -271,6 +271,44 @@ class ReservationServiceTest {
         when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
 
         assertThrows(BadRequestException.class, () -> service.cancelReservation(1L, user));
+    }
+
+    @Test
+    void getReservationById_validId_reservationReturned() {
+        Reservation reservation = new Reservation();
+        reservation.setId(1L);
+        reservation.setPassengerEmail("test@email.com");
+        reservation.setStatus(ReservationStatus.RESERVED);
+
+        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+
+        Reservation result = service.getReservationById(1L);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getPassengerEmail()).isEqualTo("test@email.com");
+        assertThat(result.getStatus()).isEqualTo(ReservationStatus.RESERVED);
+    }
+
+    @Test
+    void getReservationById_invalidId_shouldThrowException() {
+        when(reservationRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> service.getReservationById(99L));
+    }
+
+    @Test
+    void saveReservation_validReservation_reservationSaved() {
+        Reservation reservation = new Reservation();
+        reservation.setId(1L);
+        reservation.setPassengerEmail("test@email.com");
+        reservation.setStatus(ReservationStatus.RESERVED);
+
+        when(reservationRepository.save(reservation)).thenReturn(reservation);
+
+        service.saveReservation(reservation);
+
+        verify(reservationRepository, times(1)).save(reservation);
     }
 
     private AppUser createUser() {
