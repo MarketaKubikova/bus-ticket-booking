@@ -24,4 +24,8 @@ public class WalletService {
 
         return walletRepository.save(wallet);
     }
+
+    public void saveWallet(Wallet wallet) {
+        walletRepository.save(wallet);
+    }
 }

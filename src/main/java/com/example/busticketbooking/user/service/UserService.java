@@ -1,5 +1,6 @@
 package com.example.busticketbooking.user.service;
 
+import com.example.busticketbooking.payment.entity.Wallet;
 import com.example.busticketbooking.payment.service.WalletService;
 import com.example.busticketbooking.shared.config.PasswordConfig;
 import com.example.busticketbooking.shared.exception.AlreadyExistsException;
@@ -51,9 +52,14 @@ public class UserService {
         user.setPassword(passwordConfig.passwordEncoder().encode(request.password()));
         user.setEmail(request.email());
         user.setRole(Role.USER);
-        user.setWallet(walletService.createWallet(user));
+
+        userRepository.save(user);
+
+        Wallet wallet = walletService.createWallet(user);
+        user.setWallet(wallet);
 
         AppUser savedUser = userRepository.save(user);
+
         String token = jwtService.generateToken(savedUser);
 
         return new AuthResponse(token);

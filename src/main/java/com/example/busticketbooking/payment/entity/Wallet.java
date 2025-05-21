@@ -1,5 +1,6 @@
 package com.example.busticketbooking.payment.entity;
 
+import com.example.busticketbooking.shared.exception.InsufficientBalanceException;
 import com.example.busticketbooking.user.entity.AppUser;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -20,8 +21,21 @@ public class Wallet implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
-    private BigDecimal balance;
+    @Column(nullable = false)
+    private BigDecimal balance = BigDecimal.ZERO;
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private AppUser user;
+
+    public void increaseBalance(BigDecimal amount) {
+        this.balance = balance.add(amount);
+    }
+
+    public void decreaseBalance(BigDecimal amount) {
+        if (balance.compareTo(amount) < 0) {
+            throw new InsufficientBalanceException("Insufficient balance");
+        } else {
+            this.balance = balance.subtract(amount);
+        }
+    }
 }

@@ -36,7 +36,7 @@ public class Reservation {
     @ManyToOne
     private AppUser user;
     @Enumerated(EnumType.STRING)
-    private ReservationStatus status = ReservationStatus.ACTIVE;
+    private ReservationStatus status = ReservationStatus.RESERVED;
     @Column(name = "canceled_at")
     private LocalDateTime canceledAt = null;
     @Column(name = "price_czk")
