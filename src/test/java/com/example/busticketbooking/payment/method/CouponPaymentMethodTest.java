@@ -51,7 +51,7 @@ class CouponPaymentMethodTest {
         coupon.setCode("TESTCOUPON");
         coupon.setAmount(BigDecimal.TEN);
 
-        Reservation reservation = new Reservation(1L, new ScheduledTrip(), "test@test.com", new Seat(), LocalDateTime.of(2025, 5, 21, 8, 33), null, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT);
+        Reservation reservation = new Reservation(1L, new ScheduledTrip(), "test@test.com", new Seat(), LocalDateTime.of(2025, 5, 21, 8, 33), null, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT, new PaymentTransaction());
 
         when(couponRepository.findByCode("TESTCOUPON")).thenReturn(Optional.of(coupon));
         when(reservationService.getReservationById(1L)).thenReturn(reservation);
@@ -92,7 +92,7 @@ class CouponPaymentMethodTest {
         coupon.setCode("INSUFFICIENTCOUPON");
         coupon.setAmount(BigDecimal.ONE);
 
-        Reservation reservation = new Reservation(1L, new ScheduledTrip(), "test@test.com", new Seat(), LocalDateTime.of(2025, 5, 21, 8, 33), null, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT);
+        Reservation reservation = new Reservation(1L, new ScheduledTrip(), "test@test.com", new Seat(), LocalDateTime.of(2025, 5, 21, 8, 33), null, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT, new PaymentTransaction());
 
         when(couponRepository.findByCode("INSUFFICIENTCOUPON")).thenReturn(Optional.of(coupon));
         when(reservationService.getReservationById(1L)).thenReturn(reservation);

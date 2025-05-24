@@ -20,6 +20,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -65,6 +66,7 @@ public class WalletRechargeService {
         transaction.setPaymentMethod(PaymentMethodType.COUPON);
         transaction.setReference("Coupon: " + request.couponCode());
         transaction.setStatus(PaymentStatus.COMPLETED);
+        transaction.setCreatedAt(LocalDateTime.now());
         transactionRepository.save(transaction);
 
         return new PaymentResponse("Wallet successfully recharged.");

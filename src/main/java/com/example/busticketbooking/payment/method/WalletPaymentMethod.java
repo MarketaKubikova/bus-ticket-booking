@@ -45,12 +45,10 @@ public class WalletPaymentMethod implements PaymentMethod {
         reservation.setStatus(ReservationStatus.PAID);
         reservationService.saveReservation(reservation);
 
-        PaymentTransaction transaction = new PaymentTransaction();
+        PaymentTransaction transaction = reservation.getPaymentTransaction();
         transaction.setPaymentMethod(PaymentMethodType.WALLET);
         transaction.setTransactionType(TransactionType.TICKET_PURCHASE);
         transaction.setStatus(PaymentStatus.COMPLETED);
-        transaction.setReservation(reservation);
-        transaction.setAmount(reservation.getPriceCzk());
         transaction.setReference("Wallet: " + wallet.getId());
         transactionRepository.save(transaction);
 

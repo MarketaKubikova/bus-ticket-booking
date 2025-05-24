@@ -1,5 +1,6 @@
 package com.example.busticketbooking.reservation.entity;
 
+import com.example.busticketbooking.payment.entity.PaymentTransaction;
 import com.example.busticketbooking.reservation.model.ReservationStatus;
 import com.example.busticketbooking.reservation.model.Tariff;
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
@@ -31,8 +32,8 @@ public class Reservation {
     private String passengerEmail;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Seat seat;
-    @Column(name = "booked_at")
-    private LocalDateTime bookedAt;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
     @ManyToOne
     private AppUser user;
     @Enumerated(EnumType.STRING)
@@ -43,13 +44,15 @@ public class Reservation {
     private BigDecimal priceCzk;
     @Enumerated(EnumType.STRING)
     private Tariff tariff;
+    @OneToOne(mappedBy = "reservation", cascade = CascadeType.ALL)
+    private PaymentTransaction paymentTransaction;
 
     public Reservation(Long id, ScheduledTrip scheduledTrip, String passengerEmail, Seat seat, AppUser user, BigDecimal priceCzk) {
         this.id = id;
         this.scheduledTrip = scheduledTrip;
         this.passengerEmail = passengerEmail;
         this.seat = seat;
-        this.bookedAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
         this.user = user;
         this.priceCzk = priceCzk;
     }
