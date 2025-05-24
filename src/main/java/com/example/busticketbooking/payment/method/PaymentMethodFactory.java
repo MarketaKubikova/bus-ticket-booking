@@ -16,9 +16,9 @@ public class PaymentMethodFactory {
 
     public PaymentMethod getStrategy(PaymentMethodType method) {
         return strategies.stream()
-                .filter(strategy -> PaymentMethodType.fromString(strategy.getClass().getSimpleName()
+                .filter(strategy -> PaymentMethodType.fromString(strategy.getClass().getSuperclass().getSimpleName()
                         .replace("PaymentMethod", "")).equals(method))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("No strategy found for method: " + method));
+                .orElseThrow(() -> new IllegalArgumentException("No strategy found for method: " + method.name()));
     }
 }

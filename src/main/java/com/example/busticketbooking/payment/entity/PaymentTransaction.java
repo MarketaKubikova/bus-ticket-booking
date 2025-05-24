@@ -26,12 +26,15 @@ public class PaymentTransaction {
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method")
     private PaymentMethodType paymentMethod;
-    private LocalDateTime timestamp = LocalDateTime.now();
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
     private String reference;
     @ManyToOne
     private Wallet wallet;
-    @ManyToOne
+    @OneToOne
     private Reservation reservation;
 }

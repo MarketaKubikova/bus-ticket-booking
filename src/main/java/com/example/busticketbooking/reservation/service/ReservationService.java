@@ -1,5 +1,8 @@
 package com.example.busticketbooking.reservation.service;
 
+import com.example.busticketbooking.payment.entity.PaymentTransaction;
+import com.example.busticketbooking.payment.model.PaymentStatus;
+import com.example.busticketbooking.payment.repository.PaymentTransactionRepository;
 import com.example.busticketbooking.pricing.service.PricingService;
 import com.example.busticketbooking.reservation.dto.ReservationRequest;
 import com.example.busticketbooking.reservation.dto.ReservationResponse;
@@ -37,6 +40,7 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final ScheduledTripRepository scheduledTripRepository;
+    private final PaymentTransactionRepository paymentTransactionRepository;
     private final SeatService seatService;
     private final PricingService pricingService;
     private final ReservationMapper reservationMapper;
@@ -57,10 +61,12 @@ public class ReservationService {
             throw new SeatNotAvailableException(request.seatNumber());
         }
 
+        LocalDateTime currentTime = LocalDateTime.now(clock);
+
         Reservation reservation = new Reservation();
         reservation.setScheduledTrip(scheduledTrip);
         reservation.setSeat(seat);
-        reservation.setBookedAt(LocalDateTime.now(clock));
+        reservation.setCreatedAt(currentTime);
         reservation.setTariff(request.tariff());
 
         AppUser currentUser = userService.getCurrentAuthenticatedUser();
@@ -78,9 +84,18 @@ public class ReservationService {
         BigDecimal price = pricingService.calculatePrice(scheduledTrip, currentUser, request.tariff());
         reservation.setPriceCzk(price);
 
-        Reservation savedReservation = reservationRepository.save(reservation);
+        PaymentTransaction transaction = new PaymentTransaction();
+        transaction.setReservation(reservation);
+        transaction.setAmount(price);
+        transaction.setStatus(PaymentStatus.PENDING);
+        transaction.setCreatedAt(currentTime);
 
-        log.info("Reservation with id '{}' successfully created at '{}'", savedReservation.getId(), savedReservation.getBookedAt());
+        reservation.setPaymentTransaction(transaction);
+
+        Reservation savedReservation = reservationRepository.save(reservation);
+        paymentTransactionRepository.save(transaction);
+
+        log.info("Reservation with id '{}' successfully created at '{}'", savedReservation.getId(), savedReservation.getCreatedAt());
 
         return reservationMapper.toResponseDto(savedReservation);
     }
@@ -118,6 +133,22 @@ public class ReservationService {
         seatService.releaseSeat(reservation.getSeat());
 
         log.info("Reservation with id '{}' successfully cancelled at {}", reservationId, reservation.getCanceledAt());
+    }
+
+    @Transactional
+    public void cancelExpiredReservation(Reservation reservation) {
+        LocalDateTime currentTime = LocalDateTime.now(clock);
+
+        reservation.setStatus(ReservationStatus.EXPIRED);
+        reservation.setCanceledAt(currentTime);
+        reservation.getPaymentTransaction().setStatus(PaymentStatus.EXPIRED);
+        reservation.getPaymentTransaction().setReference("Reservation expired");
+        reservation.getPaymentTransaction().setUpdatedAt(currentTime);
+        seatService.releaseSeat(reservation.getSeat());
+        reservationRepository.save(reservation);
+        paymentTransactionRepository.save(reservation.getPaymentTransaction());
+
+        log.info("Reservation with id '{}' expired and be canceled at {}", reservation.getId(), reservation.getCanceledAt());
     }
 
     public Reservation getReservationById(Long reservationId) {

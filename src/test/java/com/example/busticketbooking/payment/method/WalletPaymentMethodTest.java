@@ -53,7 +53,7 @@ class WalletPaymentMethodTest {
         wallet.setBalance(BigDecimal.valueOf(100L));
         wallet.setUser(user);
         user.setWallet(wallet);
-        Reservation reservation = new Reservation(1L, new ScheduledTrip(), "test@test.com", new Seat(), LocalDateTime.of(2025, 5, 21, 8, 33), user, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT);
+        Reservation reservation = new Reservation(1L, new ScheduledTrip(), "test@test.com", new Seat(), LocalDateTime.of(2025, 5, 21, 8, 33), user, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT, new PaymentTransaction());
         PaymentRequest request = new PaymentRequest(1L, PaymentMethodType.WALLET, TransactionType.TICKET_PURCHASE, null);
 
         when(userService.getCurrentAuthenticatedUser()).thenReturn(user);
@@ -81,7 +81,7 @@ class WalletPaymentMethodTest {
         wallet.setBalance(BigDecimal.valueOf(5L));
         wallet.setUser(user);
         user.setWallet(wallet);
-        Reservation reservation = new Reservation(1L, new ScheduledTrip(), "test@test.com", new Seat(), LocalDateTime.of(2025, 5, 21, 8, 33), user, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT);
+        Reservation reservation = new Reservation(1L, new ScheduledTrip(), "test@test.com", new Seat(), LocalDateTime.of(2025, 5, 21, 8, 33), user, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT, new PaymentTransaction());
         PaymentRequest request = new PaymentRequest(1L, PaymentMethodType.WALLET, TransactionType.TICKET_PURCHASE, null);
 
         when(userService.getCurrentAuthenticatedUser()).thenReturn(user);

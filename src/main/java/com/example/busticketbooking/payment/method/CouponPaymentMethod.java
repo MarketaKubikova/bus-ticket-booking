@@ -19,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Component
 @RequiredArgsConstructor
 public class CouponPaymentMethod implements PaymentMethod {
@@ -42,13 +44,12 @@ public class CouponPaymentMethod implements PaymentMethod {
             throw new InsufficientBalanceException("Coupon balance is insufficient for this reservation.");
         }
 
-        PaymentTransaction transaction = new PaymentTransaction();
+        PaymentTransaction transaction = reservation.getPaymentTransaction();
         transaction.setPaymentMethod(PaymentMethodType.COUPON);
         transaction.setTransactionType(TransactionType.TICKET_PURCHASE);
         transaction.setStatus(PaymentStatus.COMPLETED);
-        transaction.setReservation(reservation);
-        transaction.setAmount(reservation.getPriceCzk());
         transaction.setReference("Coupon: " + coupon.getCode());
+        transaction.setUpdatedAt(LocalDateTime.now());
         transactionRepository.save(transaction);
 
         coupon.increaseUsedCount();

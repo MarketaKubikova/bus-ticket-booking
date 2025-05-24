@@ -1,6 +1,9 @@
 package com.example.busticketbooking.reservation.service;
 
 import com.example.busticketbooking.bus.entity.Bus;
+import com.example.busticketbooking.payment.entity.PaymentTransaction;
+import com.example.busticketbooking.payment.model.PaymentStatus;
+import com.example.busticketbooking.payment.repository.PaymentTransactionRepository;
 import com.example.busticketbooking.pricing.service.PricingService;
 import com.example.busticketbooking.reservation.dto.ReservationRequest;
 import com.example.busticketbooking.reservation.dto.ReservationResponse;
@@ -53,6 +56,8 @@ class ReservationServiceTest {
     @Mock
     private ScheduledTripRepository scheduledTripRepository;
     @Mock
+    private PaymentTransactionRepository paymentTransactionRepository;
+    @Mock
     private SeatService seatService;
     @Mock
     private PricingService pricingService;
@@ -72,7 +77,8 @@ class ReservationServiceTest {
         LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
         ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime);
         Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip, 1);
-        Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, departureDateTime, null, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT);
+        PaymentTransaction paymentTransaction = new PaymentTransaction();
+        Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, departureDateTime, null, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT, paymentTransaction);
         ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com", ReservationStatus.RESERVED, BigDecimal.TEN, Tariff.ADULT);
         LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
         Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
@@ -84,6 +90,7 @@ class ReservationServiceTest {
         when(userService.getCurrentAuthenticatedUser()).thenReturn(null);
         when(pricingService.calculatePrice(scheduledTrip, null, Tariff.ADULT)).thenReturn(BigDecimal.TEN);
         when(reservationRepository.save(any(Reservation.class))).thenReturn(createdReservation);
+        when(paymentTransactionRepository.save(any(PaymentTransaction.class))).thenReturn(paymentTransaction);
         when(reservationMapper.toResponseDto(createdReservation)).thenReturn(response);
 
         ReservationResponse result = service.createReservation(request);
@@ -110,10 +117,11 @@ class ReservationServiceTest {
         LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
         ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime);
         Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip, 1);
-        Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, null, BigDecimal.TEN);
-        ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com", ReservationStatus.RESERVED, BigDecimal.TEN, Tariff.ADULT);
+        PaymentTransaction paymentTransaction = new PaymentTransaction();
         LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
         Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
+        Reservation createdReservation = new Reservation(1L, scheduledTrip, user.getEmail(), seat, fixedDateTime, user, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT, paymentTransaction);
+        ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com", ReservationStatus.RESERVED, BigDecimal.TEN, Tariff.ADULT);
 
         when(clock.instant()).thenReturn(instant);
         when(clock.getZone()).thenReturn(Constant.ZONE_PRAGUE);
@@ -122,6 +130,7 @@ class ReservationServiceTest {
         when(seatService.reserveSeat(request.seatNumber(), scheduledTrip)).thenReturn(seat);
         when(pricingService.calculatePrice(scheduledTrip, user, Tariff.ADULT)).thenReturn(BigDecimal.TEN);
         when(reservationRepository.save(any(Reservation.class))).thenReturn(createdReservation);
+        when(paymentTransactionRepository.save(any(PaymentTransaction.class))).thenReturn(paymentTransaction);
         when(reservationMapper.toResponseDto(createdReservation)).thenReturn(response);
 
         ReservationResponse result = service.createReservation(request);
@@ -309,6 +318,32 @@ class ReservationServiceTest {
         service.saveReservation(reservation);
 
         verify(reservationRepository, times(1)).save(reservation);
+    }
+
+    @Test
+    void cancelExpiredReservation_validReservation_reservationCancelled() {
+        Reservation reservation = new Reservation();
+        reservation.setId(1L);
+        reservation.setSeat(new Seat());
+        reservation.setStatus(ReservationStatus.RESERVED);
+        reservation.setPaymentTransaction(new PaymentTransaction());
+        LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
+        Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
+
+        when(clock.instant()).thenReturn(instant);
+        when(clock.getZone()).thenReturn(Constant.ZONE_PRAGUE);
+        doNothing().when(seatService).releaseSeat(any(Seat.class));
+        when(reservationRepository.save(reservation)).thenReturn(reservation);
+        when(paymentTransactionRepository.save(reservation.getPaymentTransaction())).thenReturn(reservation.getPaymentTransaction());
+
+        service.cancelExpiredReservation(reservation);
+
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.EXPIRED);
+        assertThat(reservation.getCanceledAt()).isEqualTo(LocalDateTime.of(2025, 1, 1, 10, 50));
+        assertThat(reservation.getPaymentTransaction().getStatus()).isEqualTo(PaymentStatus.EXPIRED);
+        verify(seatService, times(1)).releaseSeat(reservation.getSeat());
+        verify(reservationRepository, times(1)).save(reservation);
+        verify(paymentTransactionRepository, times(1)).save(reservation.getPaymentTransaction());
     }
 
     private AppUser createUser() {
