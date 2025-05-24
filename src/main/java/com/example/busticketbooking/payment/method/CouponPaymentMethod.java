@@ -30,15 +30,13 @@ public class CouponPaymentMethod implements PaymentMethod {
 
     @Transactional
     @Override
-    public PaymentResponse pay(PaymentRequest request) {
+    public PaymentResponse pay(PaymentRequest request, Reservation reservation) {
         Coupon coupon = couponRepository.findByCode(request.couponCode())
                 .orElseThrow(() -> new NotFoundException("Coupon '" + request.couponCode() + "' not found."));
 
         if (!coupon.isValid()) {
             throw new ExpiredCouponCodeException(coupon.getCode());
         }
-
-        Reservation reservation = reservationService.getReservationById(request.reservationId());
 
         if (coupon.getAmount().compareTo(reservation.getPriceCzk()) < 0) {
             throw new InsufficientBalanceException("Coupon balance is insufficient for this reservation.");
