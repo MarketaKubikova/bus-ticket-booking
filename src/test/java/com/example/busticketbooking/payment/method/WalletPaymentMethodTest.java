@@ -57,12 +57,11 @@ class WalletPaymentMethodTest {
         PaymentRequest request = new PaymentRequest(1L, PaymentMethodType.WALLET, TransactionType.TICKET_PURCHASE, null);
 
         when(userService.getCurrentAuthenticatedUser()).thenReturn(user);
-        when(reservationService.getReservationById(1L)).thenReturn(reservation);
         doNothing().when(walletService).saveWallet(wallet);
         doNothing().when(reservationService).saveReservation(any(Reservation.class));
         when(transactionRepository.save(any(PaymentTransaction.class))).thenReturn(new PaymentTransaction());
 
-        PaymentResponse response = walletPaymentMethod.pay(request);
+        PaymentResponse response = walletPaymentMethod.pay(request, reservation);
 
         assertThat(response.message()).isEqualTo("Payment by wallet successful.");
     }
@@ -71,7 +70,7 @@ class WalletPaymentMethodTest {
     void pay_noAuthenticatedUser_shouldThrowForbiddenException() {
         when(userService.getCurrentAuthenticatedUser()).thenReturn(null);
 
-        assertThrows(ForbiddenException.class, () -> walletPaymentMethod.pay(new PaymentRequest(1L, PaymentMethodType.WALLET, TransactionType.TICKET_PURCHASE, null)));
+        assertThrows(ForbiddenException.class, () -> walletPaymentMethod.pay(new PaymentRequest(1L, PaymentMethodType.WALLET, TransactionType.TICKET_PURCHASE, null), new Reservation()));
     }
 
     @Test
@@ -85,8 +84,7 @@ class WalletPaymentMethodTest {
         PaymentRequest request = new PaymentRequest(1L, PaymentMethodType.WALLET, TransactionType.TICKET_PURCHASE, null);
 
         when(userService.getCurrentAuthenticatedUser()).thenReturn(user);
-        when(reservationService.getReservationById(1L)).thenReturn(reservation);
 
-        assertThrows(InsufficientBalanceException.class, () -> walletPaymentMethod.pay(request));
+        assertThrows(InsufficientBalanceException.class, () -> walletPaymentMethod.pay(request, reservation));
     }
 }

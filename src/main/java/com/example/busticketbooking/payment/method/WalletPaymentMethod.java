@@ -16,6 +16,7 @@ import com.example.busticketbooking.shared.exception.ForbiddenException;
 import com.example.busticketbooking.user.entity.AppUser;
 import com.example.busticketbooking.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class WalletPaymentMethod implements PaymentMethod {
 
     private final UserService userService;
@@ -32,12 +34,14 @@ public class WalletPaymentMethod implements PaymentMethod {
 
     @Transactional
     @Override
-    public PaymentResponse pay(PaymentRequest request) {
+    public PaymentResponse pay(PaymentRequest request, Reservation reservation) {
         AppUser user = Optional.ofNullable(userService.getCurrentAuthenticatedUser())
-                .orElseThrow(() -> new ForbiddenException("No authenticated user"));
+                .orElseThrow(() -> {
+                    log.error("Payment cannot be processed: No authenticated user.");
+                    return new ForbiddenException("No authenticated user");
+                });
 
         Wallet wallet = user.getWallet();
-        Reservation reservation = reservationService.getReservationById(request.reservationId());
 
         wallet.decreaseBalance(reservation.getPriceCzk());
         walletService.saveWallet(wallet);
@@ -51,6 +55,8 @@ public class WalletPaymentMethod implements PaymentMethod {
         transaction.setStatus(PaymentStatus.COMPLETED);
         transaction.setReference("Wallet: " + wallet.getId());
         transactionRepository.save(transaction);
+
+        log.info("Payment by wallet successful for user: {}", user.getId());
 
         return new PaymentResponse("Payment by wallet successful.");
     }
