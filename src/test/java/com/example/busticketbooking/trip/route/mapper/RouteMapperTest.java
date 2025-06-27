@@ -10,6 +10,7 @@ import org.mapstruct.factory.Mappers;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.ZoneId;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -23,7 +24,7 @@ class RouteMapperTest {
 
     @Test
     void mapRouteToRouteResponse_withValidRoute_shouldReturnCorrectRouteResponse() {
-        Route route = new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN);
+        Route route = new Route(1L, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Vienna", ZoneId.of("Europe/Vienna")), 334.0, Duration.ofHours(4), BigDecimal.TEN);
 
         RouteResponse response = routeMapper.toResponseDto(route);
 

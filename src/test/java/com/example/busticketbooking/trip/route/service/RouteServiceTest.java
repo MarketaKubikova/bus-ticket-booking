@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -37,16 +38,16 @@ class RouteServiceTest {
     @InjectMocks
     private RouteService service;
 
-    private final Route route = new Route(null, new City(1L, "Prague"), new City(2L, "Berlin"), 350.0, Duration.ofHours(4).plusMinutes(30), BigDecimal.TEN);
+    private final Route route = new Route(null, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Berlin", ZoneId.of("Europe/Berlin")), 350.0, Duration.ofHours(4).plusMinutes(30), BigDecimal.TEN);
 
     @Test
     void createRoute_validRequest_shouldReturnRouteResponse() {
         RouteRequest request = new RouteRequest("Prague", "Berlin", 350.0, "04:30", BigDecimal.TEN);
-        Route savedRoute = new Route(1L, new City(1L, "Prague"), new City(2L, "Berlin"), 350.0, Duration.ofHours(4).plusMinutes(30), BigDecimal.TEN);
+        Route savedRoute = new Route(1L, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Berlin", ZoneId.of("Europe/Berlin")), 350.0, Duration.ofHours(4).plusMinutes(30), BigDecimal.TEN);
 
         when(routeRepository.existsByOriginNameAndDestinationName("Prague", "Berlin")).thenReturn(false);
-        when(cityRepository.findByName("Prague")).thenReturn(Optional.of(new City(1L, "Prague")));
-        when(cityRepository.findByName("Berlin")).thenReturn(Optional.of(new City(2L, "Berlin")));
+        when(cityRepository.findByName("Prague")).thenReturn(Optional.of(new City(1L, "Prague", ZoneId.of("Europe/Prague"))));
+        when(cityRepository.findByName("Berlin")).thenReturn(Optional.of(new City(2L, "Berlin", ZoneId.of("Europe/Berlin"))));
         when(routeMapper.toEntity(request)).thenReturn(route);
         when(routeRepository.save(route)).thenReturn(savedRoute);
         when(routeMapper.toResponseDto(savedRoute)).thenReturn(new RouteResponse("Prague", "Berlin", 350.0, Duration.ofHours(4).plusMinutes(30), BigDecimal.TEN));
@@ -63,8 +64,8 @@ class RouteServiceTest {
 
     @Test
     void getAllRoutes_foundRoutes_shouldReturnRouteList() {
-        Route route1 = new Route(1L, new City(1L, "Prague"), new City(2L, "Berlin"), 350.0, Duration.ofHours(4).plusMinutes(30), BigDecimal.TEN);
-        Route route2 = new Route(2L, new City(3L, "Vienna"), new City(4L, "Budapest"), 250.0, Duration.ofHours(3).plusMinutes(15), BigDecimal.valueOf(8.50));
+        Route route1 = new Route(1L, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Berlin", ZoneId.of("Europe/Berlin")), 350.0, Duration.ofHours(4).plusMinutes(30), BigDecimal.TEN);
+        Route route2 = new Route(2L, new City(3L, "Vienna", ZoneId.of("Europe/Vienna")), new City(4L, "Budapest", ZoneId.of("Europe/Budapest")), 250.0, Duration.ofHours(3).plusMinutes(15), BigDecimal.valueOf(8.50));
         List<Route> routes = List.of(route1, route2);
 
         when(routeRepository.findAll()).thenReturn(routes);
@@ -88,7 +89,7 @@ class RouteServiceTest {
     @Test
     void updateBasePrice_validRequest_shouldReturnRouteResponse() {
         BigDecimal priceRequest = BigDecimal.valueOf(12.50);
-        Route updatedRoute = new Route(1L, new City(1L, "Prague"), new City(2L, "Berlin"), 350.0, Duration.ofHours(4).plusMinutes(30), BigDecimal.valueOf(12.50));
+        Route updatedRoute = new Route(1L, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Berlin", ZoneId.of("Europe/Berlin")), 350.0, Duration.ofHours(4).plusMinutes(30), BigDecimal.valueOf(12.50));
         RouteResponse routeResponse = new RouteResponse("Prague", "Berlin", 350.0, Duration.ofHours(4).plusMinutes(30), BigDecimal.valueOf(12.50));
 
         when(routeRepository.findById(1L)).thenReturn(Optional.of(route));

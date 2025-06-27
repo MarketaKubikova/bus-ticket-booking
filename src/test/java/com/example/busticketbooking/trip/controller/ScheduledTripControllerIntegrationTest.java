@@ -18,10 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.math.BigDecimal;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.util.List;
 import java.util.Set;
 
@@ -35,7 +32,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @ActiveProfiles("test")
 class ScheduledTripControllerIntegrationTest {
     private static final String BASE_URL = "/api/v1/scheduled-trips";
-    private final ScheduledTripResponse scheduledTripResponse = new ScheduledTripResponse("101", "Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0), LocalDateTime.of(2025, 1, 1, 15, 0), 1, BigDecimal.TEN);
+    private final ScheduledTripResponse scheduledTripResponse = new ScheduledTripResponse("101", "Prague", "Vienna", ZonedDateTime.of(LocalDateTime.of(2025, 1, 1, 11, 0), ZoneId.of("Europe/Prague")), ZonedDateTime.of(LocalDateTime.of(2025, 1, 1, 15, 0), ZoneId.of("Europe/Vienna")), 1, BigDecimal.TEN);
 
     @MockitoBean
     private ScheduledTripService scheduledTripService;
@@ -58,8 +55,8 @@ class ScheduledTripControllerIntegrationTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].busNumber").value("101"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].origin").value("Prague"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].destination").value("Vienna"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].departureDateTime").value("2025-01-01T11:00:00"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].arrivalDateTime").value("2025-01-01T15:00:00"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].departureDateTime").value("2025-01-01T11:00:00+01:00"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].arrivalDateTime").value("2025-01-01T15:00:00+01:00"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].availableSeats").value(1))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].priceCzk").value(10));
     }

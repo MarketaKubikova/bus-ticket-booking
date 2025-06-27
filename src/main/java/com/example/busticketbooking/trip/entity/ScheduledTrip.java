@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -29,17 +30,19 @@ public class ScheduledTrip {
     @ManyToOne
     private Bus bus;
     @Column(name = "departure_date_time")
-    private LocalDateTime departureDateTime;
+    private ZonedDateTime departureDateTime;
     @Column(name = "arrival_date_time")
-    private LocalDateTime arrivalDateTime;
+    private ZonedDateTime arrivalDateTime;
     @OneToMany(mappedBy = "scheduledTrip", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<Seat> seats = new HashSet<>();
 
     public ScheduledTrip(Route route, Bus bus, LocalDateTime departureDateTime) {
         this.route = route;
         this.bus = bus;
-        this.departureDateTime = departureDateTime;
-        this.arrivalDateTime = departureDateTime.plus(route.getDuration());
+        this.departureDateTime = departureDateTime.atZone(route.getOrigin().getZoneId());
+        this.arrivalDateTime = this.departureDateTime
+                .plus(route.getDuration())
+                .withZoneSameInstant(route.getDestination().getZoneId());
 
         for (int i = 1; i <= bus.getCapacity(); i++) {
             this.seats.add(new Seat(i, this));

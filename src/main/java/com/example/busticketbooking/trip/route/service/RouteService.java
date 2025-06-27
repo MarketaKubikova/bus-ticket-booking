@@ -3,6 +3,7 @@ package com.example.busticketbooking.trip.route.service;
 import com.example.busticketbooking.shared.exception.AlreadyExistsException;
 import com.example.busticketbooking.shared.exception.NotFoundException;
 import com.example.busticketbooking.shared.exception.RouteNotFoundException;
+import com.example.busticketbooking.shared.util.Constant;
 import com.example.busticketbooking.trip.route.city.entity.City;
 import com.example.busticketbooking.trip.route.city.repository.CityRepository;
 import com.example.busticketbooking.trip.route.dto.RouteRequest;
@@ -33,10 +34,16 @@ public class RouteService {
         }
 
         City origin = cityRepository.findByName(request.origin())
-                .orElseGet(() -> cityRepository.save(new City(request.origin())));
+                .orElseGet(() -> {
+                    log.info("City {} not found, creating new city with zone id {}", request.origin(), Constant.ZONE_PRAGUE);
+                    return cityRepository.save(new City(request.origin()));
+                });
 
         City destination = cityRepository.findByName(request.destination())
-                .orElseGet(() -> cityRepository.save(new City(request.destination())));
+                .orElseGet(() -> {
+                    log.info("City {} not found, creating new city with zone id {}", request.origin(), Constant.ZONE_PRAGUE);
+                    return cityRepository.save(new City(request.destination()));
+                });
 
         Route route = routeMapper.toEntity(request);
         route.setOrigin(origin);

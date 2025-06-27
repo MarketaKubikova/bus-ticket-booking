@@ -14,6 +14,8 @@ import com.example.busticketbooking.shared.exception.BadRequestException;
 import com.example.busticketbooking.shared.exception.ForbiddenException;
 import com.example.busticketbooking.shared.exception.NotFoundException;
 import com.example.busticketbooking.shared.exception.SeatNotAvailableException;
+import com.example.busticketbooking.shared.service.DateTimeService;
+import com.example.busticketbooking.shared.util.Constant;
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
 import com.example.busticketbooking.trip.repository.ScheduledTripRepository;
 import com.example.busticketbooking.trip.seat.entity.Seat;
@@ -28,15 +30,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.Clock;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ReservationService {
-    private static final int CANCELLATION_TIME_LIMIT_MINUTES = 30;
+    private static final Duration CANCELLATION_TIME_LIMIT_MINUTES = Duration.ofMinutes(30);
 
     private final ReservationRepository reservationRepository;
     private final ScheduledTripRepository scheduledTripRepository;
@@ -45,7 +47,7 @@ public class ReservationService {
     private final PricingService pricingService;
     private final ReservationMapper reservationMapper;
     private final UserService userService;
-    private final Clock clock;
+    private final DateTimeService dateTimeService;
 
     @Transactional
     public ReservationResponse createReservation(ReservationRequest request) {
@@ -61,7 +63,7 @@ public class ReservationService {
             throw new SeatNotAvailableException(request.seatNumber());
         }
 
-        LocalDateTime currentTime = LocalDateTime.now(clock);
+        Instant currentTime = dateTimeService.getCurrentUtcTime();
 
         Reservation reservation = new Reservation();
         reservation.setScheduledTrip(scheduledTrip);
@@ -121,14 +123,16 @@ public class ReservationService {
             throw new ForbiddenException("You are not authorized to cancel this reservation");
         }
 
-        if (!LocalDateTime.now(clock).isBefore(reservation.getScheduledTrip().getDepartureDateTime()
-                .minusMinutes(CANCELLATION_TIME_LIMIT_MINUTES))) {
-            log.error("User with ID '{}' is trying to cancel a reservation less than {} minutes before the trip", user.getId(), CANCELLATION_TIME_LIMIT_MINUTES);
-            throw new BadRequestException("Reservation cannot be canceled less than " + CANCELLATION_TIME_LIMIT_MINUTES + " minutes before the trip");
+        Instant currentTime = dateTimeService.getCurrentUtcTime();
+        Instant departureTime = dateTimeService.convertToUtc(reservation.getScheduledTrip().getDepartureDateTime());
+
+        if (dateTimeService.addDurationToUtc(currentTime, CANCELLATION_TIME_LIMIT_MINUTES).isAfter(departureTime)) {
+            log.error("User with ID '{}' is trying to cancel a reservation less than {} minutes before the trip", user.getId(), CANCELLATION_TIME_LIMIT_MINUTES.toMinutes());
+            throw new BadRequestException("Reservation cannot be canceled less than " + CANCELLATION_TIME_LIMIT_MINUTES.toMinutes() + " minutes before the trip");
         }
 
         reservation.setStatus(ReservationStatus.CANCELED);
-        reservation.setCanceledAt(LocalDateTime.now(clock));
+        reservation.setCanceledAt(currentTime);
         reservationRepository.save(reservation);
         seatService.releaseSeat(reservation.getSeat());
 
@@ -137,7 +141,7 @@ public class ReservationService {
 
     @Transactional
     public void cancelExpiredReservation(Reservation reservation) {
-        LocalDateTime currentTime = LocalDateTime.now(clock);
+        Instant currentTime = dateTimeService.getCurrentUtcTime();
 
         reservation.setStatus(ReservationStatus.EXPIRED);
         reservation.setCanceledAt(currentTime);
@@ -148,7 +152,7 @@ public class ReservationService {
         reservationRepository.save(reservation);
         paymentTransactionRepository.save(reservation.getPaymentTransaction());
 
-        log.info("Reservation with id '{}' expired and be canceled at {}", reservation.getId(), reservation.getCanceledAt());
+        log.info("Reservation with id '{}' expired and was canceled at {}", reservation.getId(), dateTimeService.convertToZone(reservation.getCanceledAt(), Constant.ZONE_PRAGUE.getId()));
     }
 
     public Reservation getReservationById(Long reservationId) {

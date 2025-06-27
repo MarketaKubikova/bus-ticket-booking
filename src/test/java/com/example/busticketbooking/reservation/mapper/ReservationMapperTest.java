@@ -14,6 +14,8 @@ import org.mapstruct.factory.Mappers;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -27,14 +29,19 @@ class ReservationMapperTest {
         reservationMapper = Mappers.getMapper(ReservationMapper.class);
     }
 
-    @Test
-    void toResponseDtoMapsReservationToResponseDto() {
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Vienna"), new City(2L, "Budapest"), 244.0, Duration.ofHours(3), BigDecimal.TEN), new Bus("101", 3), LocalDateTime.of(2025, 1, 1, 9, 0));
+    private static Reservation createReservation() {
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Vienna", ZoneId.of("Europe/Vienna")), new City(2L, "Budapest", ZoneId.of("Europe/Budapest")), 244.0, Duration.ofHours(3), BigDecimal.TEN), new Bus("101", 3), LocalDateTime.of(2025, 1, 1, 9, 0));
         Reservation reservation = new Reservation();
         reservation.setId(1L);
         reservation.setSeat(new Seat(1, scheduledTrip));
         reservation.setPassengerEmail("test@test.com");
         reservation.setScheduledTrip(scheduledTrip);
+        return reservation;
+    }
+
+    @Test
+    void toResponseDtoMapsReservationToResponseDto() {
+        Reservation reservation = createReservation();
 
         ReservationResponse responseDto = reservationMapper.toResponseDto(reservation);
 
@@ -43,6 +50,6 @@ class ReservationMapperTest {
         assertEquals("test@test.com", responseDto.getPassengerEmail());
         assertEquals("Vienna", responseDto.getOrigin());
         assertEquals("Budapest", responseDto.getDestination());
-        assertEquals(LocalDateTime.of(2025, 1, 1, 9, 0), responseDto.getDepartureDateTime());
+        assertEquals(ZonedDateTime.of(LocalDateTime.of(2025, 1, 1, 9, 0), ZoneId.of("Europe/Vienna")), responseDto.getDepartureDateTime());
     }
 }

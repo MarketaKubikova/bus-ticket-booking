@@ -13,6 +13,7 @@ import com.example.busticketbooking.reservation.entity.Reservation;
 import com.example.busticketbooking.reservation.model.ReservationStatus;
 import com.example.busticketbooking.reservation.service.ReservationService;
 import com.example.busticketbooking.shared.exception.ForbiddenException;
+import com.example.busticketbooking.shared.service.DateTimeService;
 import com.example.busticketbooking.user.entity.AppUser;
 import com.example.busticketbooking.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class WalletPaymentMethod implements PaymentMethod {
     private final UserService userService;
     private final WalletService walletService;
     private final ReservationService reservationService;
+    private final DateTimeService dateTimeService;
     private final PaymentTransactionRepository transactionRepository;
 
     @Transactional
@@ -54,6 +56,7 @@ public class WalletPaymentMethod implements PaymentMethod {
         transaction.setTransactionType(TransactionType.TICKET_PURCHASE);
         transaction.setStatus(PaymentStatus.COMPLETED);
         transaction.setReference("Wallet: " + wallet.getId());
+        transaction.setUpdatedAt(dateTimeService.getCurrentUtcTime());
         transactionRepository.save(transaction);
 
         log.info("Payment by wallet successful for user: {}", user.getId());

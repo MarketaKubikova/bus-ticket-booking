@@ -22,6 +22,8 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -44,7 +46,7 @@ class ReservationControllerIntegrationTest {
 
     @Test
     void createReservation_validRequest_returnsCreated() throws Exception {
-        when(reservationService.createReservation(any(ReservationRequest.class))).thenReturn(new ReservationResponse("Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0, 0), 1, "test@test.com", ReservationStatus.RESERVED, BigDecimal.TEN, Tariff.ADULT));
+        when(reservationService.createReservation(any(ReservationRequest.class))).thenReturn(new ReservationResponse("Prague", "Vienna", ZonedDateTime.of(LocalDateTime.of(2025, 1, 1, 11, 0, 0), ZoneId.of("Europe/Prague")), 1, "test@test.com", ReservationStatus.RESERVED, BigDecimal.TEN, Tariff.ADULT));
 
         mockMvc.perform(MockMvcRequestBuilders.post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -52,7 +54,7 @@ class ReservationControllerIntegrationTest {
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.origin").value("Prague"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.destination").value("Vienna"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.departureDateTime").value("2025-01-01T11:00:00"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.departureDateTime").value("2025-01-01T11:00:00+01:00"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.seatNumber").value(1))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.passengerEmail").value("test@test.com"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("RESERVED"))
@@ -71,14 +73,14 @@ class ReservationControllerIntegrationTest {
     @Test
     @WithMockUser(username = "user")
     void getUsersReservations_validRequest_returnsReservation() throws Exception {
-        when(reservationService.getUsersReservations(any())).thenReturn(List.of(new ReservationResponse("Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0), 1, "test@test.com", ReservationStatus.RESERVED, BigDecimal.TEN, Tariff.ADULT)));
+        when(reservationService.getUsersReservations(any())).thenReturn(List.of(new ReservationResponse("Prague", "Vienna", ZonedDateTime.of(LocalDateTime.of(2025, 1, 1, 11, 0), ZoneId.of("Europe/Prague")), 1, "test@test.com", ReservationStatus.RESERVED, BigDecimal.TEN, Tariff.ADULT)));
 
         mockMvc.perform(MockMvcRequestBuilders.get(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].origin").value("Prague"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].destination").value("Vienna"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].departureDateTime").value("2025-01-01T11:00:00"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].departureDateTime").value("2025-01-01T11:00:00+01:00"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].seatNumber").value(1))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].passengerEmail").value("test@test.com"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].status").value("RESERVED"))

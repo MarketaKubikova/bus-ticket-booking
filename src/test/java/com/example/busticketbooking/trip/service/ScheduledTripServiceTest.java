@@ -34,7 +34,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ScheduledTripServiceTest {
-    private final Route route = new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN);
+    private final Route route = new Route(1L, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Vienna", ZoneId.of("Europe/Vienna")), 334.0, Duration.ofHours(4), BigDecimal.TEN);
     private final ScheduledTrip scheduledTrip1 = new ScheduledTrip(route, new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 11, 0));
     private final ScheduledTrip scheduledTrip2 = new ScheduledTrip(route, new Bus("102", 3), LocalDateTime.of(2025, 1, 8, 11, 0));
     private final ScheduledTrip scheduledTrip3 = new ScheduledTrip(route, new Bus("101", 5), LocalDateTime.of(2025, 1, 15, 11, 0));
@@ -64,8 +64,8 @@ class ScheduledTripServiceTest {
         assertThat(result).hasSize(3);
         assertThat(result.getFirst().origin()).isEqualTo("Prague");
         assertThat(result.getFirst().busNumber()).isEqualTo("101");
-        assertThat(result.getFirst().departureDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 11, 0));
-        assertThat(result.getFirst().arrivalDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 15, 0));
+        assertThat(result.getFirst().departureDateTime()).isEqualTo(ZonedDateTime.of(LocalDateTime.of(2025, 1, 1, 11, 0), ZoneId.of("Europe/Prague")));
+        assertThat(result.getFirst().arrivalDateTime()).isEqualTo(ZonedDateTime.of(LocalDateTime.of(2025, 1, 1, 15, 0), ZoneId.of("Europe/Vienna")));
         assertThat(result.getFirst().availableSeats()).isEqualTo(5);
         assertThat(result.getFirst().priceCzk()).isEqualTo(BigDecimal.TEN);
     }
@@ -82,8 +82,8 @@ class ScheduledTripServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().origin()).isEqualTo("Prague");
         assertThat(result.getFirst().busNumber()).isEqualTo("101");
-        assertThat(result.getFirst().departureDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 11, 0));
-        assertThat(result.getFirst().arrivalDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 15, 0));
+        assertThat(result.getFirst().departureDateTime()).isEqualTo(ZonedDateTime.of(LocalDateTime.of(2025, 1, 1, 11, 0), ZoneId.of("Europe/Prague")));
+        assertThat(result.getFirst().arrivalDateTime()).isEqualTo(ZonedDateTime.of(LocalDateTime.of(2025, 1, 1, 15, 0), ZoneId.of("Europe/Vienna")));
         assertThat(result.getFirst().availableSeats()).isEqualTo(5);
         assertThat(result.getFirst().priceCzk()).isEqualTo(BigDecimal.TEN);
     }
