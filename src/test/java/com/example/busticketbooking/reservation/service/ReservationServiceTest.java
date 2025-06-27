@@ -16,6 +16,7 @@ import com.example.busticketbooking.shared.exception.BadRequestException;
 import com.example.busticketbooking.shared.exception.ForbiddenException;
 import com.example.busticketbooking.shared.exception.NotFoundException;
 import com.example.busticketbooking.shared.exception.SeatNotAvailableException;
+import com.example.busticketbooking.shared.service.DateTimeService;
 import com.example.busticketbooking.shared.util.Constant;
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
 import com.example.busticketbooking.trip.repository.ScheduledTripRepository;
@@ -35,10 +36,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -64,6 +62,8 @@ class ReservationServiceTest {
     @Mock
     private UserService userService;
     @Mock
+    private DateTimeService dateTimeService;
+    @Mock
     private ReservationMapper reservationMapper;
     @Mock
     private Clock clock;
@@ -74,19 +74,16 @@ class ReservationServiceTest {
     void createReservation_validRequestNonLoggedInUser_reservationCreated() {
         ReservationRequest request = new ReservationRequest(1L, 1, "test@test.com", Tariff.ADULT);
         Bus bus = new Bus("99", 5);
-        LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime);
+        ZonedDateTime departureDateTime = ZonedDateTime.of(LocalDateTime.of(2025, 1, 1, 11, 0, 0), ZoneId.of("Europe/Prague"));
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Vienna", ZoneId.of("Europe/Vienna")), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime.toLocalDateTime());
         Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip, 1);
         PaymentTransaction paymentTransaction = new PaymentTransaction();
-        Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, departureDateTime, null, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT, paymentTransaction);
+        Reservation createdReservation = new Reservation(1L, scheduledTrip, "test@test.com", seat, departureDateTime.toInstant(), null, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT, paymentTransaction);
         ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com", ReservationStatus.RESERVED, BigDecimal.TEN, Tariff.ADULT);
-        LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
-        Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
 
-        when(clock.instant()).thenReturn(instant);
-        when(clock.getZone()).thenReturn(Constant.ZONE_PRAGUE);
         when(scheduledTripRepository.findById(1L)).thenReturn(Optional.of(scheduledTrip));
         when(seatService.reserveSeat(request.seatNumber(), scheduledTrip)).thenReturn(seat);
+        when(dateTimeService.getCurrentUtcTime()).thenReturn(Instant.now());
         when(userService.getCurrentAuthenticatedUser()).thenReturn(null);
         when(pricingService.calculatePrice(scheduledTrip, null, Tariff.ADULT)).thenReturn(BigDecimal.TEN);
         when(reservationRepository.save(any(Reservation.class))).thenReturn(createdReservation);
@@ -97,7 +94,7 @@ class ReservationServiceTest {
 
         assertThat(result.getOrigin()).isEqualTo("Prague");
         assertThat(result.getDestination()).isEqualTo("Vienna");
-        assertThat(result.getDepartureDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 11, 0, 0));
+        assertThat(result.getDepartureDateTime()).isEqualTo(ZonedDateTime.of(LocalDateTime.of(2025, 1, 1, 11, 0, 0), ZoneId.of("Europe/Prague")));
         assertThat(result.getSeatNumber()).isEqualTo(1);
         assertThat(result.getPassengerEmail()).isEqualTo("test@test.com");
         assertThat(result.getStatus()).isEqualTo(ReservationStatus.RESERVED);
@@ -114,20 +111,19 @@ class ReservationServiceTest {
         ReservationRequest request = new ReservationRequest(1L, 1, Tariff.ADULT);
         AppUser user = createUser();
         Bus bus = new Bus("99", 5);
-        LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime);
+        ZonedDateTime departureDateTime = ZonedDateTime.of(LocalDateTime.of(2025, 1, 1, 11, 0, 0), ZoneId.of("Europe/Prague"));
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Vienna", ZoneId.of("Europe/Vienna")), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime.toLocalDateTime());
         Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip, 1);
         PaymentTransaction paymentTransaction = new PaymentTransaction();
         LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
         Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
-        Reservation createdReservation = new Reservation(1L, scheduledTrip, user.getEmail(), seat, fixedDateTime, user, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT, paymentTransaction);
+        Reservation createdReservation = new Reservation(1L, scheduledTrip, user.getEmail(), seat, instant, user, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT, paymentTransaction);
         ReservationResponse response = new ReservationResponse("Prague", "Vienna", departureDateTime, 1, "test@test.com", ReservationStatus.RESERVED, BigDecimal.TEN, Tariff.ADULT);
 
-        when(clock.instant()).thenReturn(instant);
-        when(clock.getZone()).thenReturn(Constant.ZONE_PRAGUE);
         when(userService.getCurrentAuthenticatedUser()).thenReturn(user);
         when(scheduledTripRepository.findById(1L)).thenReturn(Optional.of(scheduledTrip));
         when(seatService.reserveSeat(request.seatNumber(), scheduledTrip)).thenReturn(seat);
+        when(dateTimeService.getCurrentUtcTime()).thenReturn(Instant.now());
         when(pricingService.calculatePrice(scheduledTrip, user, Tariff.ADULT)).thenReturn(BigDecimal.TEN);
         when(reservationRepository.save(any(Reservation.class))).thenReturn(createdReservation);
         when(paymentTransactionRepository.save(any(PaymentTransaction.class))).thenReturn(paymentTransaction);
@@ -137,7 +133,7 @@ class ReservationServiceTest {
 
         assertThat(result.getOrigin()).isEqualTo("Prague");
         assertThat(result.getDestination()).isEqualTo("Vienna");
-        assertThat(result.getDepartureDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 11, 0, 0));
+        assertThat(result.getDepartureDateTime()).isEqualTo(ZonedDateTime.of(LocalDateTime.of(2025, 1, 1, 11, 0, 0), ZoneId.of("Europe/Prague")));
         assertThat(result.getSeatNumber()).isEqualTo(1);
         assertThat(result.getPassengerEmail()).isEqualTo("test@test.com");
         assertThat(result.getStatus()).isEqualTo(ReservationStatus.RESERVED);
@@ -158,8 +154,8 @@ class ReservationServiceTest {
     void createReservation_seatNotAvailable_shouldThrowException() {
         ReservationRequest request = new ReservationRequest(1L, 99, "test@test.com", Tariff.ADULT);
         Bus bus = new Bus("99", 5);
-        LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime);
+        ZonedDateTime departureDateTime = ZonedDateTime.of(LocalDateTime.of(2025, 1, 1, 11, 0, 0), ZoneId.of("Europe/Prague"));
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Vienna", ZoneId.of("Europe/Vienna")), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime.toLocalDateTime());
 
         when(scheduledTripRepository.findById(1L)).thenReturn(Optional.of(scheduledTrip));
         when(seatService.reserveSeat(request.seatNumber(), scheduledTrip)).thenThrow(SeatNotAvailableException.class);
@@ -171,8 +167,8 @@ class ReservationServiceTest {
     void createReservations_twoUsersReserveSameSeat_shouldThrowException() {
         ReservationRequest request = new ReservationRequest(1L, 1, "test@test.com", Tariff.ADULT);
         Bus bus = new Bus("99", 5);
-        LocalDateTime departureDateTime = LocalDateTime.of(2025, 1, 1, 11, 0, 0);
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime);
+        ZonedDateTime departureDateTime = ZonedDateTime.of(LocalDateTime.of(2025, 1, 1, 11, 0, 0), ZoneId.of("Europe/Prague"));
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Vienna", ZoneId.of("Europe/Vienna")), 334.0, Duration.ofHours(4), BigDecimal.TEN), bus, departureDateTime.toLocalDateTime());
 
         when(scheduledTripRepository.findById(1L)).thenReturn(Optional.of(scheduledTrip));
         when(seatService.reserveSeat(request.seatNumber(), scheduledTrip)).thenThrow(OptimisticLockException.class);
@@ -185,14 +181,14 @@ class ReservationServiceTest {
         AppUser user = createUser();
 
         when(reservationRepository.findAllByUser(user)).thenReturn(List.of(new Reservation()));
-        when(reservationMapper.toResponseDto(any(Reservation.class))).thenReturn(new ReservationResponse("Prague", "Vienna", LocalDateTime.of(2025, 1, 1, 11, 0), 1, "test@test.com", ReservationStatus.RESERVED, BigDecimal.TEN, Tariff.ADULT));
+        when(reservationMapper.toResponseDto(any(Reservation.class))).thenReturn(new ReservationResponse("Prague", "Vienna", ZonedDateTime.of(LocalDateTime.of(2025, 1, 1, 11, 0), ZoneId.of("Europe/Prague")), 1, "test@test.com", ReservationStatus.RESERVED, BigDecimal.TEN, Tariff.ADULT));
 
         var result = service.getUsersReservations(user);
 
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().getOrigin()).isEqualTo("Prague");
         assertThat(result.getFirst().getDestination()).isEqualTo("Vienna");
-        assertThat(result.getFirst().getDepartureDateTime()).isEqualTo(LocalDateTime.of(2025, 1, 1, 11, 0));
+        assertThat(result.getFirst().getDepartureDateTime()).isEqualTo(ZonedDateTime.of(LocalDateTime.of(2025, 1, 1, 11, 0), ZoneId.of("Europe/Prague")));
         assertThat(result.getFirst().getSeatNumber()).isEqualTo(1);
         assertThat(result.getFirst().getPassengerEmail()).isEqualTo("test@test.com");
         assertThat(result.getFirst().getStatus()).isEqualTo(ReservationStatus.RESERVED);
@@ -211,27 +207,26 @@ class ReservationServiceTest {
     @Test
     void cancelReservation_validRequest_reservationCancelled() {
         AppUser user = createUser();
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 11, 0));
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Vienna", ZoneId.of("Europe/Prague")), 334.0, Duration.ofHours(4), BigDecimal.TEN), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 11, 0));
         Reservation reservation = new Reservation();
         reservation.setId(1L);
         reservation.setUser(user);
         reservation.setScheduledTrip(scheduledTrip);
         reservation.setStatus(ReservationStatus.RESERVED);
         reservation.setSeat(new Seat(1, scheduledTrip));
-        LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 8, 0);
-        Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
 
-        when(clock.instant()).thenReturn(instant);
-        when(clock.getZone()).thenReturn(Constant.ZONE_PRAGUE);
         when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
         when(reservationRepository.save(reservation)).thenReturn(reservation);
         doNothing().when(seatService).releaseSeat(reservation.getSeat());
+        when(dateTimeService.getCurrentUtcTime()).thenReturn(Instant.parse("2025-01-01T08:00:00Z"));
+        when(dateTimeService.convertToUtc(any(ZonedDateTime.class))).thenReturn(Instant.parse("2025-01-01T10:00:00Z"));
+        when(dateTimeService.addDurationToUtc(any(Instant.class), any(Duration.class))).thenReturn(Instant.parse("2025-01-01T08:30:00Z"));
 
         service.cancelReservation(1L, user);
 
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.CANCELED);
         assertThat(reservation.getSeat().getStatus()).isEqualTo(SeatStatus.FREE);
-        assertThat(reservation.getCanceledAt()).isEqualTo(LocalDateTime.of(2025, 1, 1, 8, 0));
+        assertThat(reservation.getCanceledAt()).isEqualTo(Instant.parse("2025-01-01T08:00:00Z"));
         verify(reservationRepository, times(1)).findById(1L);
         verify(reservationRepository, times(1)).save(reservation);
         verify(seatService, times(1)).releaseSeat(reservation.getSeat());
@@ -265,19 +260,18 @@ class ReservationServiceTest {
     @Test
     void cancelReservation_tooLateForCancellation_shouldThrowException() {
         AppUser user = createUser();
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 11, 0));
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Vienna", ZoneId.of("Europe/Vienna")), 334.0, Duration.ofHours(4), BigDecimal.TEN), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 11, 0));
         Reservation reservation = new Reservation();
         reservation.setId(1L);
         reservation.setUser(user);
         reservation.setScheduledTrip(scheduledTrip);
         reservation.setStatus(ReservationStatus.RESERVED);
         reservation.setSeat(new Seat(1, scheduledTrip));
-        LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
-        Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
 
-        when(clock.instant()).thenReturn(instant);
-        when(clock.getZone()).thenReturn(Constant.ZONE_PRAGUE);
         when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+        when(dateTimeService.getCurrentUtcTime()).thenReturn(Instant.parse("2025-01-01T09:45:00Z"));
+        when(dateTimeService.convertToUtc(any(ZonedDateTime.class))).thenReturn(Instant.parse("2025-01-01T10:00:00Z"));
+        when(dateTimeService.addDurationToUtc(any(Instant.class), any(Duration.class))).thenReturn(Instant.parse("2025-01-01T10:15:00Z"));
 
         assertThrows(BadRequestException.class, () -> service.cancelReservation(1L, user));
     }
@@ -327,11 +321,8 @@ class ReservationServiceTest {
         reservation.setSeat(new Seat());
         reservation.setStatus(ReservationStatus.RESERVED);
         reservation.setPaymentTransaction(new PaymentTransaction());
-        LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 50);
-        Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
 
-        when(clock.instant()).thenReturn(instant);
-        when(clock.getZone()).thenReturn(Constant.ZONE_PRAGUE);
+        when(dateTimeService.getCurrentUtcTime()).thenReturn(Instant.parse("2025-01-01T09:50:00Z"));
         doNothing().when(seatService).releaseSeat(any(Seat.class));
         when(reservationRepository.save(reservation)).thenReturn(reservation);
         when(paymentTransactionRepository.save(reservation.getPaymentTransaction())).thenReturn(reservation.getPaymentTransaction());
@@ -339,7 +330,7 @@ class ReservationServiceTest {
         service.cancelExpiredReservation(reservation);
 
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.EXPIRED);
-        assertThat(reservation.getCanceledAt()).isEqualTo(LocalDateTime.of(2025, 1, 1, 10, 50));
+        assertThat(reservation.getCanceledAt()).isEqualTo(ZonedDateTime.of(LocalDateTime.of(2025, 1, 1, 10, 50), ZoneId.of("Europe/Prague")).toInstant());
         assertThat(reservation.getPaymentTransaction().getStatus()).isEqualTo(PaymentStatus.EXPIRED);
         verify(seatService, times(1)).releaseSeat(reservation.getSeat());
         verify(reservationRepository, times(1)).save(reservation);

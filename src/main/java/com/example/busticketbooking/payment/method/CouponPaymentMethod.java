@@ -15,17 +15,17 @@ import com.example.busticketbooking.reservation.service.ReservationService;
 import com.example.busticketbooking.shared.exception.ExpiredCouponCodeException;
 import com.example.busticketbooking.shared.exception.InsufficientBalanceException;
 import com.example.busticketbooking.shared.exception.NotFoundException;
+import com.example.busticketbooking.shared.service.DateTimeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
 public class CouponPaymentMethod implements PaymentMethod {
     private final CouponRepository couponRepository;
     private final ReservationService reservationService;
+    private final DateTimeService dateTimeService;
     private final PaymentTransactionRepository transactionRepository;
 
     @Transactional
@@ -47,7 +47,7 @@ public class CouponPaymentMethod implements PaymentMethod {
         transaction.setTransactionType(TransactionType.TICKET_PURCHASE);
         transaction.setStatus(PaymentStatus.COMPLETED);
         transaction.setReference("Coupon: " + coupon.getCode());
-        transaction.setUpdatedAt(LocalDateTime.now());
+        transaction.setUpdatedAt(dateTimeService.getCurrentUtcTime());
         transactionRepository.save(transaction);
 
         coupon.increaseUsedCount();

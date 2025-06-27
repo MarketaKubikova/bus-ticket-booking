@@ -8,19 +8,21 @@ import com.example.busticketbooking.trip.route.city.entity.City;
 import com.example.busticketbooking.trip.route.city.mapper.CityMapper;
 import com.example.busticketbooking.trip.route.city.repository.CityRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CityService {
     private final CityRepository cityRepository;
     private final CityMapper cityMapper;
 
     public CityResponse createCity(CityRequest request) {
-        if (cityRepository.existsByName(request.name())) {
-            throw new AlreadyExistsException("City " + request.name() + " already exists");
+        if (cityRepository.existsByName(request.getName())) {
+            throw new AlreadyExistsException("City " + request.getName() + " already exists");
         }
 
         City savedCity = cityRepository.save(cityMapper.toEntity(request));

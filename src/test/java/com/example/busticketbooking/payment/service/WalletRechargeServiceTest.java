@@ -12,6 +12,7 @@ import com.example.busticketbooking.payment.repository.PaymentTransactionReposit
 import com.example.busticketbooking.shared.exception.ExpiredCouponCodeException;
 import com.example.busticketbooking.shared.exception.ForbiddenException;
 import com.example.busticketbooking.shared.exception.NotFoundException;
+import com.example.busticketbooking.shared.service.DateTimeService;
 import com.example.busticketbooking.shared.service.TransactionHandler;
 import com.example.busticketbooking.user.entity.AppUser;
 import com.example.busticketbooking.user.service.UserService;
@@ -23,6 +24,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,6 +41,8 @@ class WalletRechargeServiceTest {
     private CouponRepository couponRepository;
     @Mock
     private WalletService walletService;
+    @Mock
+    private DateTimeService dateTimeService;
     @Mock
     private PaymentTransactionRepository paymentTransactionRepository;
     @Spy
@@ -63,6 +67,7 @@ class WalletRechargeServiceTest {
         when(couponRepository.findByCode("TESTCOUPON")).thenReturn(Optional.of(coupon));
         doNothing().when(walletService).saveWallet(wallet);
         when(couponRepository.save(coupon)).thenReturn(coupon);
+        when(dateTimeService.getCurrentUtcTime()).thenReturn(Instant.now());
         when(paymentTransactionRepository.save(any(PaymentTransaction.class))).thenReturn(new PaymentTransaction());
 
         PaymentResponse response = walletRechargeService.recharge(request);

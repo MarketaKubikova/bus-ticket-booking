@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "reservations")
@@ -33,13 +33,13 @@ public class Reservation {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Seat seat;
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
     @ManyToOne
     private AppUser user;
     @Enumerated(EnumType.STRING)
     private ReservationStatus status = ReservationStatus.RESERVED;
     @Column(name = "canceled_at")
-    private LocalDateTime canceledAt = null;
+    private Instant canceledAt = null;
     @Column(name = "price_czk")
     private BigDecimal priceCzk;
     @Enumerated(EnumType.STRING)
@@ -47,12 +47,12 @@ public class Reservation {
     @OneToOne(mappedBy = "reservation", cascade = CascadeType.ALL)
     private PaymentTransaction paymentTransaction;
 
-    public Reservation(Long id, ScheduledTrip scheduledTrip, String passengerEmail, Seat seat, AppUser user, BigDecimal priceCzk) {
+    public Reservation(Long id, ScheduledTrip scheduledTrip, String passengerEmail, Seat seat, Instant createdAt, AppUser user, BigDecimal priceCzk) {
         this.id = id;
         this.scheduledTrip = scheduledTrip;
         this.passengerEmail = passengerEmail;
         this.seat = seat;
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = createdAt;
         this.user = user;
         this.priceCzk = priceCzk;
     }

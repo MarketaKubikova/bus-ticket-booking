@@ -1,14 +1,14 @@
 package com.example.busticketbooking.trip.dto;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 public record ScheduledTripResponse(
         String busNumber,
         String origin,
         String destination,
-        LocalDateTime departureDateTime,
-        LocalDateTime arrivalDateTime,
+        ZonedDateTime departureDateTime,
+        ZonedDateTime arrivalDateTime,
         int availableSeats,
         BigDecimal priceCzk
 ) {

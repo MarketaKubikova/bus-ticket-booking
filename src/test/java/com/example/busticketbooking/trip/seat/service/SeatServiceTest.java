@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +39,7 @@ class SeatServiceTest {
 
     @Test
     void reserveSeat_validSeatNumber_shouldReturnReservedSeat() {
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 8, 0));
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Vienna", ZoneId.of("Europe/Vienna")), 334.0, Duration.ofHours(4), BigDecimal.TEN), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 8, 0));
         Seat seat = new Seat(1L, 1, SeatStatus.FREE, scheduledTrip, 1);
         scheduledTrip.setSeats(Set.of(seat));
 
@@ -53,7 +54,7 @@ class SeatServiceTest {
 
     @Test
     void reserveSeat_seatNumberNotAvailable_shouldThrowException() {
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 8, 0));
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Vienna", ZoneId.of("Europe/Vienna")), 334.0, Duration.ofHours(4), BigDecimal.TEN), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 8, 0));
         Seat seat = new Seat(2L, 2, SeatStatus.BLOCKED, scheduledTrip, 1);
         scheduledTrip.setSeats(Set.of(seat));
 
@@ -62,7 +63,7 @@ class SeatServiceTest {
 
     @Test
     void reserveSeat_seatNumberNotFound_shouldThrowException() {
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 8, 0));
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Vienna", ZoneId.of("Europe/Vienna")), 334.0, Duration.ofHours(4), BigDecimal.TEN), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 8, 0));
         Seat seat = new Seat(5L, 5, SeatStatus.FREE, scheduledTrip, 1);
         scheduledTrip.setSeats(Set.of(seat));
 
@@ -73,7 +74,7 @@ class SeatServiceTest {
 
     @Test
     void releaseSeat_validSeat_shouldUpdateSeatStatus() {
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague"), new City(2L, "Vienna"), 334.0, Duration.ofHours(4), BigDecimal.TEN), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 8, 0));
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Vienna", ZoneId.of("Europe/Vienna")), 334.0, Duration.ofHours(4), BigDecimal.TEN), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 8, 0));
         Seat seat = new Seat(1L, 1, SeatStatus.RESERVED, scheduledTrip, 1);
         scheduledTrip.setSeats(Set.of(seat));
 

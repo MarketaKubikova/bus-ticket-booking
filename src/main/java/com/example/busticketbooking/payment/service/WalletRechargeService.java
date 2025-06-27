@@ -13,6 +13,7 @@ import com.example.busticketbooking.payment.repository.PaymentTransactionReposit
 import com.example.busticketbooking.shared.exception.ExpiredCouponCodeException;
 import com.example.busticketbooking.shared.exception.ForbiddenException;
 import com.example.busticketbooking.shared.exception.NotFoundException;
+import com.example.busticketbooking.shared.service.DateTimeService;
 import com.example.busticketbooking.shared.service.TransactionHandler;
 import com.example.busticketbooking.user.entity.AppUser;
 import com.example.busticketbooking.user.service.UserService;
@@ -20,7 +21,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -30,6 +30,7 @@ public class WalletRechargeService {
     private final UserService userService;
     private final CouponRepository couponRepository;
     private final WalletService walletService;
+    private final DateTimeService dateTimeService;
     private final PaymentTransactionRepository transactionRepository;
     private final TransactionHandler transactionHandler;
 
@@ -66,7 +67,7 @@ public class WalletRechargeService {
         transaction.setPaymentMethod(PaymentMethodType.COUPON);
         transaction.setReference("Coupon: " + request.couponCode());
         transaction.setStatus(PaymentStatus.COMPLETED);
-        transaction.setCreatedAt(LocalDateTime.now());
+        transaction.setCreatedAt(dateTimeService.getCurrentUtcTime());
         transactionRepository.save(transaction);
 
         return new PaymentResponse("Wallet successfully recharged.");

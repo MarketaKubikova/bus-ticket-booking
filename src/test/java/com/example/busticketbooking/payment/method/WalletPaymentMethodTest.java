@@ -14,6 +14,7 @@ import com.example.busticketbooking.reservation.model.Tariff;
 import com.example.busticketbooking.reservation.service.ReservationService;
 import com.example.busticketbooking.shared.exception.ForbiddenException;
 import com.example.busticketbooking.shared.exception.InsufficientBalanceException;
+import com.example.busticketbooking.shared.service.DateTimeService;
 import com.example.busticketbooking.trip.entity.ScheduledTrip;
 import com.example.busticketbooking.trip.seat.entity.Seat;
 import com.example.busticketbooking.user.entity.AppUser;
@@ -25,7 +26,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -42,6 +43,8 @@ class WalletPaymentMethodTest {
     @Mock
     private ReservationService reservationService;
     @Mock
+    private DateTimeService dateTimeService;
+    @Mock
     private PaymentTransactionRepository transactionRepository;
     @InjectMocks
     private WalletPaymentMethod walletPaymentMethod;
@@ -53,12 +56,13 @@ class WalletPaymentMethodTest {
         wallet.setBalance(BigDecimal.valueOf(100L));
         wallet.setUser(user);
         user.setWallet(wallet);
-        Reservation reservation = new Reservation(1L, new ScheduledTrip(), "test@test.com", new Seat(), LocalDateTime.of(2025, 5, 21, 8, 33), user, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT, new PaymentTransaction());
+        Reservation reservation = new Reservation(1L, new ScheduledTrip(), "test@test.com", new Seat(), Instant.parse("2025-01-01T08:00:00Z"), user, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT, new PaymentTransaction());
         PaymentRequest request = new PaymentRequest(1L, PaymentMethodType.WALLET, TransactionType.TICKET_PURCHASE, null);
 
         when(userService.getCurrentAuthenticatedUser()).thenReturn(user);
         doNothing().when(walletService).saveWallet(wallet);
         doNothing().when(reservationService).saveReservation(any(Reservation.class));
+        when(dateTimeService.getCurrentUtcTime()).thenReturn(Instant.now());
         when(transactionRepository.save(any(PaymentTransaction.class))).thenReturn(new PaymentTransaction());
 
         PaymentResponse response = walletPaymentMethod.pay(request, reservation);
@@ -80,7 +84,7 @@ class WalletPaymentMethodTest {
         wallet.setBalance(BigDecimal.valueOf(5L));
         wallet.setUser(user);
         user.setWallet(wallet);
-        Reservation reservation = new Reservation(1L, new ScheduledTrip(), "test@test.com", new Seat(), LocalDateTime.of(2025, 5, 21, 8, 33), user, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT, new PaymentTransaction());
+        Reservation reservation = new Reservation(1L, new ScheduledTrip(), "test@test.com", new Seat(), Instant.parse("2025-01-01T08:33:00Z"), user, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT, new PaymentTransaction());
         PaymentRequest request = new PaymentRequest(1L, PaymentMethodType.WALLET, TransactionType.TICKET_PURCHASE, null);
 
         when(userService.getCurrentAuthenticatedUser()).thenReturn(user);

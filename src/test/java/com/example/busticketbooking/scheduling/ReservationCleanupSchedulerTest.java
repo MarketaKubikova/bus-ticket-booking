@@ -5,16 +5,14 @@ import com.example.busticketbooking.reservation.entity.Reservation;
 import com.example.busticketbooking.reservation.model.ReservationStatus;
 import com.example.busticketbooking.reservation.repository.ReservationRepository;
 import com.example.busticketbooking.reservation.service.ReservationService;
-import com.example.busticketbooking.shared.util.Constant;
+import com.example.busticketbooking.shared.service.DateTimeService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -27,19 +25,16 @@ class ReservationCleanupSchedulerTest {
     @Mock
     private ReservationService reservationService;
     @Mock
-    private Clock clock;
+    private DateTimeService dateTimeService;
     @InjectMocks
     private ReservationCleanupScheduler reservationCleanupScheduler;
 
     @Test
     void cancelExpiredReservations_foundExpiredReservations_shouldCancelReservations() {
-        LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 30);
-        Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
         PaymentTransaction paymentTransaction = new PaymentTransaction();
-        Reservation reservation = new Reservation(1L, null, null, null, LocalDateTime.of(2025, 1, 1, 10, 24), null, ReservationStatus.RESERVED, null, null, null, paymentTransaction);
+        Reservation reservation = new Reservation(1L, null, null, null, Instant.parse("2025-01-01T10:24:00Z"), null, ReservationStatus.RESERVED, null, null, null, paymentTransaction);
 
-        when(clock.instant()).thenReturn(instant);
-        when(clock.getZone()).thenReturn(Constant.ZONE_PRAGUE);
+        when(dateTimeService.getCurrentUtcTime()).thenReturn(Instant.parse("2025-01-01T10:30:00Z"));
         when(reservationRepository.findAllByStatusAndCreatedAtBefore(any(), any())).thenReturn(List.of(reservation));
         doNothing().when(reservationService).cancelExpiredReservation(any(Reservation.class));
 
@@ -50,11 +45,7 @@ class ReservationCleanupSchedulerTest {
 
     @Test
     void cancelExpiredReservations_noExpiredReservations_shouldNotCancel() {
-        LocalDateTime fixedDateTime = LocalDateTime.of(2025, 1, 1, 10, 30);
-        Instant instant = fixedDateTime.atZone(Constant.ZONE_PRAGUE).toInstant();
-
-        when(clock.instant()).thenReturn(instant);
-        when(clock.getZone()).thenReturn(Constant.ZONE_PRAGUE);
+        when(dateTimeService.getCurrentUtcTime()).thenReturn(Instant.parse("2025-01-01T10:30:00Z"));
         when(reservationRepository.findAllByStatusAndCreatedAtBefore(any(), any())).thenReturn(List.of());
 
         reservationCleanupScheduler.cancelExpiredReservations();
