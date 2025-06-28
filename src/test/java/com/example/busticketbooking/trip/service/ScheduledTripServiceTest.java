@@ -90,9 +90,11 @@ class ScheduledTripServiceTest {
 
     @Test
     void getScheduledTripsByRouteAndDepartureDate_routeNotFound_shouldThrowException() {
+        LocalDate date = LocalDate.of(2025, 1, 1);
+
         when(routeRepository.findByOriginNameAndDestinationName("Prague", "Vienna")).thenReturn(Optional.empty());
 
-        assertThrows(RouteNotFoundException.class, () -> service.getScheduledTripsByRouteAndDepartureDate("Prague", "Vienna", LocalDate.of(2025, 1, 1), Tariff.ADULT));
+        assertThrows(RouteNotFoundException.class, () -> service.getScheduledTripsByRouteAndDepartureDate("Prague", "Vienna", date, Tariff.ADULT));
     }
 
     @Test

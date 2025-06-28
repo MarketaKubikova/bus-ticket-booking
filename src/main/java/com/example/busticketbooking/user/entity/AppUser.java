@@ -33,7 +33,7 @@ public class AppUser implements UserDetails, Serializable {
     @Enumerated(EnumType.STRING)
     private Role role;
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<Reservation> reservations;
+    private transient Set<Reservation> reservations;
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Wallet wallet;
 
