@@ -10,6 +10,8 @@ class BusTicketBookingApplicationTests {
 
     @Test
     void contextLoads() {
+        // This test will simply check if the application context loads successfully.
+        // No additional assertions are needed here.
     }
 
 }
