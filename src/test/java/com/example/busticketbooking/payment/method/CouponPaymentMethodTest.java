@@ -69,9 +69,12 @@ class CouponPaymentMethodTest {
 
     @Test
     void pay_invalidCoupon_shouldThrowNotFoundException() {
+        PaymentRequest request = new PaymentRequest(1L, PaymentMethodType.COUPON, TransactionType.TICKET_PURCHASE, "INVALIDCOUPON");
+        Reservation reservation = new Reservation();
+
         when(couponRepository.findByCode("INVALIDCOUPON")).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> couponPaymentMethod.pay(new PaymentRequest(1L, PaymentMethodType.COUPON, TransactionType.TICKET_PURCHASE, "INVALIDCOUPON"), new Reservation()));
+        assertThrows(NotFoundException.class, () -> couponPaymentMethod.pay(request, reservation));
     }
 
     @Test
@@ -82,10 +85,12 @@ class CouponPaymentMethodTest {
         coupon.setAmount(BigDecimal.TEN);
         coupon.setUsageLimit(10L);
         coupon.setUsedCount(10L);
+        PaymentRequest request = new PaymentRequest(1L, PaymentMethodType.COUPON, TransactionType.TICKET_PURCHASE, "EXPIREDCOUPON");
+        Reservation reservation = new Reservation();
 
         when(couponRepository.findByCode("EXPIREDCOUPON")).thenReturn(Optional.of(coupon));
 
-        assertThrows(ExpiredCouponCodeException.class, () -> couponPaymentMethod.pay(new PaymentRequest(1L, PaymentMethodType.COUPON, TransactionType.TICKET_PURCHASE, "EXPIREDCOUPON"), new Reservation()));
+        assertThrows(ExpiredCouponCodeException.class, () -> couponPaymentMethod.pay(request, reservation));
     }
 
     @Test
@@ -94,11 +99,11 @@ class CouponPaymentMethodTest {
         coupon.setId(1L);
         coupon.setCode("INSUFFICIENTCOUPON");
         coupon.setAmount(BigDecimal.ONE);
-
+        PaymentRequest request = new PaymentRequest(1L, PaymentMethodType.COUPON, TransactionType.TICKET_PURCHASE, "INSUFFICIENTCOUPON");
         Reservation reservation = new Reservation(1L, new ScheduledTrip(), "test@test.com", new Seat(), Instant.parse("2025-05-21T12:00:00Z"), null, ReservationStatus.RESERVED, null, BigDecimal.TEN, Tariff.ADULT, new PaymentTransaction());
 
         when(couponRepository.findByCode("INSUFFICIENTCOUPON")).thenReturn(Optional.of(coupon));
 
-        assertThrows(InsufficientBalanceException.class, () -> couponPaymentMethod.pay(new PaymentRequest(1L, PaymentMethodType.COUPON, TransactionType.TICKET_PURCHASE, "INSUFFICIENTCOUPON"), reservation));
+        assertThrows(InsufficientBalanceException.class, () -> couponPaymentMethod.pay(request, reservation));
     }
 }

@@ -72,9 +72,12 @@ class WalletPaymentMethodTest {
 
     @Test
     void pay_noAuthenticatedUser_shouldThrowForbiddenException() {
+        PaymentRequest request = new PaymentRequest(1L, PaymentMethodType.WALLET, TransactionType.TICKET_PURCHASE, null);
+        Reservation reservation = new Reservation();
+
         when(userService.getCurrentAuthenticatedUser()).thenReturn(null);
 
-        assertThrows(ForbiddenException.class, () -> walletPaymentMethod.pay(new PaymentRequest(1L, PaymentMethodType.WALLET, TransactionType.TICKET_PURCHASE, null), new Reservation()));
+        assertThrows(ForbiddenException.class, () -> walletPaymentMethod.pay(request, reservation));
     }
 
     @Test
