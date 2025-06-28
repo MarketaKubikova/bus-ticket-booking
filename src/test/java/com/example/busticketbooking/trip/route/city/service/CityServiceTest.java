@@ -56,7 +56,6 @@ class CityServiceTest {
     void createCity_noZoneId_shouldUseDefaultZoneId() {
         CityRequest request = new CityRequest("Prague", null);
         City city = new City("Prague");
-        //City savedCity = new City(1L, "Prague", ZoneId.of("Europe/Prague"));
 
         when(cityRepository.existsByName("Prague")).thenReturn(false);
         when(cityMapper.toEntity(request)).thenReturn(city);
