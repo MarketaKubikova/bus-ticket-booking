@@ -1,6 +1,8 @@
 package com.example.busticketbooking.reservation.service;
 
 import com.example.busticketbooking.bus.entity.Bus;
+import com.example.busticketbooking.notification.model.NotificationType;
+import com.example.busticketbooking.notification.service.NotificationService;
 import com.example.busticketbooking.payment.entity.PaymentTransaction;
 import com.example.busticketbooking.payment.model.PaymentStatus;
 import com.example.busticketbooking.payment.repository.PaymentTransactionRepository;
@@ -66,7 +68,7 @@ class ReservationServiceTest {
     @Mock
     private ReservationMapper reservationMapper;
     @Mock
-    private Clock clock;
+    private NotificationService notificationService;
     @InjectMocks
     private ReservationService service;
 
@@ -88,6 +90,7 @@ class ReservationServiceTest {
         when(pricingService.calculatePrice(scheduledTrip, null, Tariff.ADULT)).thenReturn(BigDecimal.TEN);
         when(reservationRepository.save(any(Reservation.class))).thenReturn(createdReservation);
         when(paymentTransactionRepository.save(any(PaymentTransaction.class))).thenReturn(paymentTransaction);
+        doNothing().when(notificationService).notify(NotificationType.RESERVATION_CONFIRMED, createdReservation);
         when(reservationMapper.toResponseDto(createdReservation)).thenReturn(response);
 
         ReservationResponse result = service.createReservation(request);
@@ -103,6 +106,7 @@ class ReservationServiceTest {
         verify(scheduledTripRepository, times(1)).findById(anyLong());
         verify(reservationRepository, times(1)).save(any(Reservation.class));
         verify(seatService, times(1)).reserveSeat(anyInt(), any(ScheduledTrip.class));
+        verify(notificationService, times(1)).notify(eq(NotificationType.RESERVATION_CONFIRMED), any(Reservation.class));
         verify(reservationMapper, times(1)).toResponseDto(any(Reservation.class));
     }
 
@@ -127,6 +131,7 @@ class ReservationServiceTest {
         when(pricingService.calculatePrice(scheduledTrip, user, Tariff.ADULT)).thenReturn(BigDecimal.TEN);
         when(reservationRepository.save(any(Reservation.class))).thenReturn(createdReservation);
         when(paymentTransactionRepository.save(any(PaymentTransaction.class))).thenReturn(paymentTransaction);
+        doNothing().when(notificationService).notify(NotificationType.RESERVATION_CONFIRMED, createdReservation);
         when(reservationMapper.toResponseDto(createdReservation)).thenReturn(response);
 
         ReservationResponse result = service.createReservation(request);
@@ -207,13 +212,7 @@ class ReservationServiceTest {
     @Test
     void cancelReservation_validRequest_reservationCancelled() {
         AppUser user = createUser();
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Vienna", ZoneId.of("Europe/Prague")), 334.0, Duration.ofHours(4), BigDecimal.TEN), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 11, 0));
-        Reservation reservation = new Reservation();
-        reservation.setId(1L);
-        reservation.setUser(user);
-        reservation.setScheduledTrip(scheduledTrip);
-        reservation.setStatus(ReservationStatus.RESERVED);
-        reservation.setSeat(new Seat(1, scheduledTrip));
+        Reservation reservation = getReservationFromPragueToVienna(user);
 
         when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
         when(reservationRepository.save(reservation)).thenReturn(reservation);
@@ -260,13 +259,7 @@ class ReservationServiceTest {
     @Test
     void cancelReservation_tooLateForCancellation_shouldThrowException() {
         AppUser user = createUser();
-        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Vienna", ZoneId.of("Europe/Vienna")), 334.0, Duration.ofHours(4), BigDecimal.TEN), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 11, 0));
-        Reservation reservation = new Reservation();
-        reservation.setId(1L);
-        reservation.setUser(user);
-        reservation.setScheduledTrip(scheduledTrip);
-        reservation.setStatus(ReservationStatus.RESERVED);
-        reservation.setSeat(new Seat(1, scheduledTrip));
+        Reservation reservation = getReservationFromPragueToVienna(user);
 
         when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
         when(dateTimeService.getCurrentUtcTime()).thenReturn(Instant.parse("2025-01-01T09:45:00Z"));
@@ -347,5 +340,16 @@ class ReservationServiceTest {
         user.setReservations(new HashSet<>());
 
         return user;
+    }
+
+    private Reservation getReservationFromPragueToVienna(AppUser user) {
+        ScheduledTrip scheduledTrip = new ScheduledTrip(new Route(1L, new City(1L, "Prague", ZoneId.of("Europe/Prague")), new City(2L, "Vienna", ZoneId.of("Europe/Vienna")), 334.0, Duration.ofHours(4), BigDecimal.TEN), new Bus("101", 5), LocalDateTime.of(2025, 1, 1, 11, 0));
+        Reservation reservation = new Reservation();
+        reservation.setId(1L);
+        reservation.setUser(user);
+        reservation.setScheduledTrip(scheduledTrip);
+        reservation.setStatus(ReservationStatus.RESERVED);
+        reservation.setSeat(new Seat(1, scheduledTrip));
+        return reservation;
     }
 }
