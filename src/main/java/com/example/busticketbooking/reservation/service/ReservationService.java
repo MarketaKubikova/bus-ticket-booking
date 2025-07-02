@@ -1,5 +1,7 @@
 package com.example.busticketbooking.reservation.service;
 
+import com.example.busticketbooking.notification.model.NotificationType;
+import com.example.busticketbooking.notification.service.NotificationService;
 import com.example.busticketbooking.payment.entity.PaymentTransaction;
 import com.example.busticketbooking.payment.model.PaymentStatus;
 import com.example.busticketbooking.payment.repository.PaymentTransactionRepository;
@@ -48,6 +50,7 @@ public class ReservationService {
     private final ReservationMapper reservationMapper;
     private final UserService userService;
     private final DateTimeService dateTimeService;
+    private final NotificationService notificationService;
 
     @Transactional
     public ReservationResponse createReservation(ReservationRequest request) {
@@ -98,7 +101,7 @@ public class ReservationService {
         paymentTransactionRepository.save(transaction);
 
         log.info("Reservation with id '{}' successfully created at '{}'", savedReservation.getId(), savedReservation.getCreatedAt());
-
+        notificationService.notify(NotificationType.RESERVATION_CONFIRMED, savedReservation);
         return reservationMapper.toResponseDto(savedReservation);
     }
 
