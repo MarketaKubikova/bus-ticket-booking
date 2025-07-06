@@ -1,0 +1,1207 @@
+openapi: 3.1.0
+info:
+  title: Bus Ticket Booking API
+  description: API for managing bus ticket booking application
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Generated server url
+security:
+  - bearerAuth: [ ]
+tags:
+  - name: Seat Management
+    description: Operations related to seat management
+  - name: Payment Processing
+    description: Operations related to payment processing
+  - name: Bus Management
+    description: Operations related to bus management
+  - name: Route Management
+    description: Operations related to route management
+  - name: Scheduled Trip Management
+    description: Operations related to scheduled trip management
+  - name: Wallet Management
+    description: Operations related to wallet management
+  - name: Reservation Management
+    description: Operations related to reservation management
+  - name: City Management
+    description: Operations related to city management
+  - name: Authentication
+    description: Operations related to user authentication and registration
+paths:
+  /api/v1/wallet/recharge:
+    post:
+      tags:
+        - Wallet Management
+      summary: Recharge user wallet
+      description: Allows users to recharge their wallet using various payment methods.
+      operationId: RechargeWallet
+      requestBody:
+        description: Payment request containing payment method and transaction details
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentRequest"
+        required: true
+      responses:
+        "200":
+          description: Wallet recharged successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentResponse"
+        "400":
+          description: Invalid payment request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Invalid payment request
+        "403":
+          description: Forbidden - User does not have permission to recharge wallet
+          content:
+            application/json:
+              schema:
+                type: string
+                example: You do not have permission to perform this action
+        "404":
+          description: Coupon not found or expired
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Coupon with code {couponCode} not found or expired"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                example: Internal server error occurred
+  /api/v1/scheduled-trips:
+    post:
+      tags:
+        - Scheduled Trip Management
+      summary: Create Scheduled Trip
+      description: Create a new scheduled trip based on the provided request.
+      operationId: CreateScheduledTrip
+      requestBody:
+        description: Scheduled trip request containing details for creating a new
+          scheduled trip
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduledTripRequest"
+        required: true
+      responses:
+        "201":
+          description: Successfully created scheduled trips
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Successfully created 5 scheduled trips
+        "400":
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Invalid scheduled trip request
+        "403":
+          description: Forbidden - User does not have ADMIN role
+          content:
+            '*/*':
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                example: Internal server error occurred
+  /api/v1/routes:
+    get:
+      tags:
+        - Route Management
+      summary: Get all routes
+      description: Retrieve a list of all routes available in the system.
+      operationId: GetAllRoutes
+      responses:
+        "200":
+          description: Successfully retrieved all routes
+          content:
+            application/json:
+              schema:
+                type: array
+                $ref: "#/components/schemas/RouteResponse"
+        "403":
+          description: Forbidden - User does not have ADMIN role
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Access denied
+        "404":
+          description: No routes found
+          content:
+            application/json:
+              schema:
+                type: string
+                example: No routes available
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                example: Internal server error occurred
+    post:
+      tags:
+        - Route Management
+      summary: Create a new route
+      description: Allows users with ADMIN role to create a new route.
+      operationId: CreateRoute
+      requestBody:
+        description: Route details to be created
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RouteRequest"
+        required: true
+      responses:
+        "201":
+          description: Route created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteResponse"
+        "400":
+          description: Invalid route request data
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Invalid route request data
+        "403":
+          description: Forbidden - User does not have ADMIN role
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Access denied
+        "409":
+          description: Conflict - Route already exists
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Route already exists
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                example: Internal server error occurred
+  /api/v1/reservations:
+    get:
+      tags:
+        - Reservation Management
+      summary: Get all reservations for the authenticated user
+      description: Retrieve a list of all reservations made by the authenticated user.
+        Only accessible by users with USER role.
+      operationId: GetUsersReservations
+      responses:
+        "200":
+          description: Successfully retrieved user's reservations
+          content:
+            application/json:
+              schema:
+                type: array
+                $ref: "#/components/schemas/ReservationResponse"
+        "403":
+          description: Forbidden - User does not have USER role
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReservationResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                example: Internal server error occurred
+    post:
+      tags:
+        - Reservation Management
+      summary: Create a new reservation
+      description: Create a new reservation for a scheduled trip.
+      operationId: CreateReservation
+      requestBody:
+        description: Reservation data to book the ticket
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservationRequest"
+        required: true
+      responses:
+        "201":
+          description: Successfully created reservation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationResponse"
+        "400":
+          description: Bad Request - Invalid input data
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Invalid reservation request
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                example: Internal server error occurred
+    delete:
+      tags:
+        - Reservation Management
+      summary: Cancel a reservation
+      description: Cancel an existing reservation by its ID. Only accessible by users
+        with USER role.
+      operationId: CancelReservation
+      parameters:
+        - name: reservationId
+          in: query
+          description: ID of the reservation to cancel
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 12345
+      responses:
+        "204":
+          description: Successfully cancelled reservation
+        "400":
+          description: Bad Request - Invalid reservation ID
+        "403":
+          description: Forbidden - User does not have USER role
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                example: Internal server error occurred
+  /api/v1/pay:
+    post:
+      tags:
+        - Payment Processing
+      summary: Process payment for a reservation
+      description: Processes the payment for a reservation using the provided payment
+        details.
+      operationId: PayReservation
+      requestBody:
+        description: Payment request containing payment method and transaction details
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentRequest"
+        required: true
+      responses:
+        "200":
+          description: Payment processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentResponse"
+        "400":
+          description: Invalid payment request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Invalid payment request
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                example: Internal server error occurred
+  /api/v1/cities:
+    get:
+      tags:
+        - City Management
+      summary: Get all cities
+      description: Retrieve a list of all cities in the system. Only accessible by
+        users with ADMIN role.
+      operationId: GetAllCities
+      responses:
+        "200":
+          description: Successfully retrieved list of cities
+          content:
+            application/json:
+              schema:
+                type: array
+                $ref: "#/components/schemas/CityResponse"
+        "403":
+          description: Forbidden - User does not have ADMIN role
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Access denied
+        "404":
+          description: No cities found
+          content:
+            application/json:
+              schema:
+                type: string
+                example: No cities found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                example: Internal server error occurred
+    post:
+      tags:
+        - City Management
+      summary: Create a new city
+      description: Create a new city in the system. Only accessible by users with
+        ADMIN role.
+      operationId: CreateCity
+      requestBody:
+        description: City details to be created
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CityRequest"
+        required: true
+      responses:
+        "201":
+          description: City created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CityResponse"
+        "400":
+          description: Invalid city request data
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Invalid city request data
+        "403":
+          description: Forbidden - User does not have ADMIN role
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Access denied
+        "409":
+          description: Conflict - City already exists
+          content:
+            application/json:
+              schema:
+                type: string
+                example: City already exists
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                example: Internal server error occurred
+  /api/v1/buses:
+    get:
+      tags:
+        - Bus Management
+      summary: Get all buses
+      description: Retrieve a list of all buses in the system. Only accessible by
+        users with ADMIN role.
+      operationId: GetAllBuses
+      responses:
+        "200":
+          description: Successfully retrieved list of all buses
+          content:
+            application/json:
+              schema:
+                type: array
+                $ref: "#/components/schemas/BusResponse"
+        "403":
+          description: Forbidden - User does not have ADMIN role
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BusResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                example: Internal server error occurred
+    post:
+      tags:
+        - Bus Management
+      summary: Create a new bus
+      description: Create a new bus in the system. Only accessible by users with ADMIN
+        role.
+      operationId: CreateBus
+      requestBody:
+        description: Bus data to create new bus
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BusRequest"
+        required: true
+      responses:
+        "201":
+          description: Successfully created bus
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusResponse"
+        "400":
+          description: Bad Request - Invalid input data
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Invalid bus data provided
+        "403":
+          description: Forbidden - User does not have ADMIN role
+          content:
+            application/json:
+              schema:
+                type: string
+                example: You do not have permission to perform this action
+        "409":
+          description: Conflict - Bus with the same number already exists
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Bus with number {busNumber} already exists"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                example: Internal server error occurred
+  /api/v1/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: Allows a new user to register in the system.
+      operationId: RegisterUser
+      requestBody:
+        description: User registration details
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "200":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid registration data
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Invalid registration data
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                example: Internal server error occurred
+  /api/v1/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Allows an existing user to log in to the system.
+      operationId: LoginUser
+      requestBody:
+        description: User login credentials
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "200":
+          description: User logged in successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid login credentials
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Invalid login credentials
+        "401":
+          description: Unauthorized - Invalid username or password
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Unauthorized - Invalid username or password
+        "429":
+          description: Too Many Requests - Too many login attempts
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Too Many Requests - Too many login attempts
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                example: Internal server error occurred
+  /api/v1/routes/{id}/base-price:
+    patch:
+      tags:
+        - Route Management
+      summary: Update base price of a route
+      description: Allows users with ADMIN role to update the base price of a specific
+        route.
+      operationId: UpdateBasePrice
+      parameters:
+        - name: id
+          in: path
+          description: ID of the route to update
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      requestBody:
+        description: New base price for the route
+        content:
+          application/json:
+            schema:
+              type: number
+              format: decimal
+              example: 100.0
+        required: true
+      responses:
+        "200":
+          description: Base price updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteResponse"
+        "400":
+          description: Invalid base price value
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Base price must be greater than 0
+        "403":
+          description: Forbidden - User does not have ADMIN role
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Access denied
+        "404":
+          description: Route not found
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Route with the specified ID does not exist
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                example: Internal server error occurred
+  /api/v1/seats/{scheduled-trip-id}:
+    get:
+      tags:
+        - Seat Management
+      summary: Get seats for a scheduled trip
+      description: Retrieve a list of seats available for a specific scheduled trip.
+      operationId: GetSeatsForScheduledTrip
+      parameters:
+        - name: scheduled-trip-id
+          in: path
+          description: ID of the scheduled trip for which to retrieve seats
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      responses:
+        "200":
+          description: Successfully retrieved seats for the scheduled trip
+          content:
+            application/json:
+              schema:
+                type: array
+                $ref: "#/components/schemas/SeatResponse"
+        "404":
+          description: Scheduled trip not found
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SeatResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                example: Internal server error occurred
+  /api/v1/scheduled-trips/search:
+    get:
+      tags:
+        - Scheduled Trip Management
+      summary: Search Scheduled Trips
+      description: "Search for scheduled trips based on origin, destination, and departure\
+        \ date."
+      operationId: SearchScheduledTrips
+      parameters:
+        - name: from
+          in: query
+          description: Origin location
+          required: true
+          schema:
+            type: string
+            example: Prague
+        - name: to
+          in: query
+          description: Destination location
+          required: true
+          schema:
+            type: string
+            example: Vienna
+        - name: date
+          in: query
+          description: Departure date in ISO format (yyyy-MM-dd)
+          required: true
+          schema:
+            type: string
+            format: date
+            example: 2023-10-01
+      requestBody:
+        description: Tariff details for the trip
+        content:
+          application/json:
+            schema:
+              type: string
+              enum:
+                - ADULT
+                - CHILD
+                - STUDENT
+                - SENIOR
+        required: true
+      responses:
+        "200":
+          description: List of scheduled trips matching the search criteria
+          content:
+            application/json:
+              schema:
+                type: array
+                $ref: "#/components/schemas/ScheduledTripResponse"
+                minProperties: 1
+        "400":
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Invalid date format or missing parameters
+        "404":
+          description: No scheduled trips found for the given criteria
+          content:
+            application/json:
+              schema:
+                type: string
+                example: No scheduled trips found for the specified route and date
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                example: Internal server error occurred
+  /api/v1/buses/{id}:
+    get:
+      tags:
+        - Bus Management
+      summary: Get bus by ID
+      description: Retrieve details of a specific bus by its ID. Only accessible by
+        users with ADMIN role.
+      operationId: GetBusById
+      parameters:
+        - name: id
+          in: path
+          description: ID of the bus to retrieve
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 145
+      responses:
+        "200":
+          description: Successfully retrieved bus details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusResponse"
+        "404":
+          description: Bus not found
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BusResponse"
+        "403":
+          description: Forbidden - User does not have ADMIN role
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BusResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                example: Internal server error occurred
+components:
+  schemas:
+    PaymentRequest:
+      type: object
+      description: Request object for processing a payment
+      properties:
+        reservationId:
+          type: integer
+          format: int64
+          description: Unique identifier for the reservation
+          example: 12345
+        method:
+          type: string
+          description: Payment method type
+          enum:
+            - COUPON
+            - WALLET
+        transactionType:
+          type: string
+          description: Type of transaction
+          enum:
+            - TICKET_PURCHASE
+            - WALLET_RECHARGE
+        couponCode:
+          type: string
+          description: Coupon code for the payment
+          example: DISCOUNT2023
+      required:
+        - method
+        - transactionType
+    PaymentResponse:
+      type: object
+      description: Response object for payment processing
+      properties:
+        message:
+          type: string
+          description: Message indicating the result of the payment processing
+          example: Payment successful
+      required:
+        - message
+    ScheduledTripRequest:
+      type: object
+      description: Request object for scheduling a trip
+      properties:
+        busNumber:
+          type: string
+          description: Unique identifier for the bus
+          example: BUS123
+          minLength: 1
+        origin:
+          type: string
+          description: Origin location of the trip
+          example: Prague
+          minLength: 1
+        destination:
+          type: string
+          description: Destination location of the trip
+          example: Vienna
+          minLength: 1
+        departureTime:
+          type: string
+          description: Departure time of the trip at departure's city time zone
+          example: 08:30
+        departureDay:
+          type: array
+          description: Days of the week when the trip is scheduled
+          items:
+            type: string
+            enum:
+              - MONDAY
+              - TUESDAY
+              - WEDNESDAY
+              - THURSDAY
+              - FRIDAY
+              - SATURDAY
+              - SUNDAY
+          minItems: 1
+          uniqueItems: true
+        fromDate:
+          type: string
+          format: date
+          description: Start date for the trip schedule in ISO format
+          example: 2023-10-01
+        toDate:
+          type: string
+          format: date
+          description: End date for the trip schedule in ISO format
+          example: 2023-12-31
+      required:
+        - busNumber
+        - departureDay
+        - departureTime
+        - destination
+        - fromDate
+        - origin
+        - toDate
+    RouteRequest:
+      type: object
+      description: Request object for creating or updating a route
+      properties:
+        origin:
+          type: string
+          description: Origin city of the route
+          example: Prague
+          minLength: 1
+        destination:
+          type: string
+          description: Destination city of the route
+          example: Vienna
+          minLength: 1
+        distance:
+          type: number
+          format: double
+          description: Distance of the route in kilometers
+          example: 250.0
+          minimum: 0
+        duration:
+          type: string
+          description: Duration in hours and minutes
+          example: 02:30
+          pattern: "^(\\d{2}:(\\d{2})$"
+        basePriceCzk:
+          type: number
+          description: Base price of the route in CZK
+          example: 300.0
+          minimum: 0
+      required:
+        - basePriceCzk
+        - destination
+        - distance
+        - duration
+        - origin
+    RouteResponse:
+      type: object
+      description: Response object for route details
+      properties:
+        origin:
+          type: string
+          description: Origin of the route
+          example: Prague
+        destination:
+          type: string
+          description: Destination of the route
+          example: Vienna
+        distance:
+          type: number
+          format: double
+          description: Distance of the route in kilometers
+          example: 250.0
+        duration:
+          type: string
+          description: Duration in hours and minutes
+          example: PT2H30M
+          pattern: "^(PT)(\\d{1,2})H(\\d{1,2})(M)"
+        basePriceCzk:
+          type: number
+          description: Base price of the route in CZK
+          example: 300.0
+      required:
+        - basePriceCzk
+        - destination
+        - distance
+        - duration
+        - origin
+    ReservationRequest:
+      type: object
+      description: Request object for creating a reservation
+      properties:
+        scheduledTripId:
+          type: integer
+          format: int64
+          description: Unique identifier for the scheduled trip
+          example: 12345
+        seatNumber:
+          type: integer
+          format: int32
+          description: Seat number for the reservation
+          example: 12
+          minimum: 1
+        passengerEmail:
+          type: string
+          description: Email address of the passenger
+          example: joe@doe.com
+        tariff:
+          type: string
+          description: Tariff details for the reservation
+          enum:
+            - ADULT
+            - CHILD
+            - STUDENT
+            - SENIOR
+      required:
+        - scheduledTripId
+        - seatNumber
+        - tariff
+    ReservationResponse:
+      type: object
+      description: Response object for reservation details
+      properties:
+        origin:
+          type: string
+          description: Origin of the trip
+          example: Prague
+        destination:
+          type: string
+          description: Destination of the trip
+          example: Vienna
+        departureDateTime:
+          type: string
+          format: date-time
+          description: Departure date and time of the trip
+          example: 2023-10-01T10:00:00Z
+        seatNumber:
+          type: integer
+          format: int32
+          description: Seat number for the reservation
+          example: 12
+        passengerEmail:
+          type: string
+          description: Email address of the passenger
+          example: joe@doe.com
+        status:
+          type: string
+          description: Status of the reservation
+          enum:
+            - RESERVED
+            - PAID
+            - CANCELED
+            - EXPIRED
+        priceCzk:
+          type: number
+          description: Price of the reservation in CZK
+          example: 500.0
+        tariff:
+          type: string
+          description: Tariff details for the reservation
+          enum:
+            - ADULT
+            - CHILD
+            - STUDENT
+            - SENIOR
+      required:
+        - departureDateTime
+        - destination
+        - origin
+        - passengerEmail
+        - priceCzk
+        - seatNumber
+        - status
+        - tariff
+    CityRequest:
+      type: object
+      description: Request object for creating or updating a city
+      properties:
+        name:
+          type: string
+          description: Name of the city
+          example: Prague
+          minLength: 1
+        zoneId:
+          type: string
+          default: Europe/Prague
+          description: Time zone of the city
+          example: Europe/Prague
+      required:
+        - name
+    CityResponse:
+      type: object
+      description: Response object for city details
+      properties:
+        name:
+          type: string
+          description: Name of the city
+          example: Prague
+      required:
+        - name
+    BusRequest:
+      type: object
+      description: Request object for creating or updating a bus
+      properties:
+        busNumber:
+          type: string
+          description: Unique identifier for the bus
+          example: BUS123
+          minLength: 1
+        capacity:
+          type: integer
+          format: int32
+          description: Capacity of the bus
+          example: 50
+          minimum: 1
+      required:
+        - busNumber
+        - capacity
+    BusResponse:
+      type: object
+      description: Response object for bus details
+      properties:
+        busNumber:
+          type: string
+          description: Unique identifier for the bus
+          example: BUS123
+        capacity:
+          type: integer
+          format: int32
+          description: Capacity of the bus
+          example: 50
+      required:
+        - busNumber
+        - capacity
+    RegisterRequest:
+      type: object
+      description: Request object for user registration
+      properties:
+        email:
+          type: string
+          description: Email of the user
+          example: joe@doe.com
+          minLength: 1
+        password:
+          type: string
+          description: Password of the user
+          example: securePassword123
+          minLength: 1
+      required:
+        - email
+        - password
+    AuthResponse:
+      type: object
+      description: Response object for user authentication
+      properties:
+        token:
+          type: string
+          description: JWT token for authenticated user
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      required:
+        - token
+    LoginRequest:
+      type: object
+      description: Request object for user login
+      properties:
+        username:
+          type: string
+          description: Username of the user
+          example: john@doe.com
+          minLength: 1
+        password:
+          type: string
+          description: Password of the user
+          example: securePassword123
+          minLength: 1
+      required:
+        - password
+        - username
+    SeatResponse:
+      type: object
+      description: Response object for seat details
+      properties:
+        seatNumber:
+          type: integer
+          format: int32
+          description: Unique identifier for the seat
+          example: 12
+        status:
+          type: string
+          description: Current status of the seat
+          enum:
+            - FREE
+            - BLOCKED
+            - RESERVED
+      required:
+        - seatNumber
+        - status
+    ScheduledTripResponse:
+      type: object
+      description: Response object for scheduled trip details
+      properties:
+        busNumber:
+          type: string
+          description: Unique identifier for the bus
+          example: BUS123
+        origin:
+          type: string
+          description: Origin of the trip
+          example: Prague
+        destination:
+          type: string
+          description: Destination of the trip
+          example: Vienna
+        departureDateTime:
+          type: string
+          format: date-time
+          description: Departure date and time of the trip
+          example: 2023-10-01T10:00:00Z
+        arrivalDateTime:
+          type: string
+          format: date-time
+          description: Arrival date and time of the trip
+          example: 2023-10-01T12:00:00Z
+        availableSeats:
+          type: integer
+          format: int32
+          description: Number of available seats for the trip
+          example: 30
+          minimum: 0
+        priceCzk:
+          type: number
+          description: Price of the trip in CZK
+          example: 500.0
+      required:
+        - arrivalDateTime
+        - availableSeats
+        - busNumber
+        - departureDateTime
+        - destination
+        - origin
+        - priceCzk
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
