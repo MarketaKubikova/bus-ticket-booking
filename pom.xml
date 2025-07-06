@@ -28,6 +28,7 @@
     </scm>
     <properties>
         <java.version>21</java.version>
+        <sonar.exclusions>${basedir}/src/main/openapi/**</sonar.exclusions>
     </properties>
 
     <profiles>
