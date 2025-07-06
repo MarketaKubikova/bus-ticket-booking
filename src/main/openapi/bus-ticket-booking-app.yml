@@ -812,7 +812,6 @@ components:
           example: DISCOUNT2023
       required:
         - method
-        - reservationId
         - transactionType
     PaymentResponse:
       type: object
