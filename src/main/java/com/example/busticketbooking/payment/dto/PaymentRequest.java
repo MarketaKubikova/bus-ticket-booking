@@ -7,9 +7,8 @@ import jakarta.validation.constraints.NotNull;
 
 @Schema(
         description = "Request object for processing a payment",
-        requiredProperties = {"reservationId", "method", "transactionType"})
+        requiredProperties = {"method", "transactionType"})
 public record PaymentRequest(
-        @NotNull
         @Schema(description = "Unique identifier for the reservation", example = "12345")
         Long reservationId,
         @NotNull
