@@ -42,6 +42,8 @@ public class SecurityConfig {
                                 auth.requestMatchers(openapiPaths).permitAll();
                             }
                             auth
+                                    .requestMatchers("/actuator/health").permitAll()
+                                    .requestMatchers("/actuator/**").hasRole("ADMIN")
                                     .requestMatchers("/api/v1/auth/**").permitAll()
                                     .requestMatchers((HttpMethod.POST), "/api/v1/reservations").permitAll()
                                     .requestMatchers((HttpMethod.GET), "/api/v1/scheduled-trips/search").permitAll()
