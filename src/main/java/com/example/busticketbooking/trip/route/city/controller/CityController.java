@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/cities")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "City Management", description = "Operations related to city management")
 public class CityController {
     private final CityService cityService;
@@ -73,6 +73,7 @@ public class CityController {
             }
     )
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CityResponse> createCity(@RequestBody @Valid CityRequest request) {
         CityResponse response = cityService.createCity(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -81,7 +82,8 @@ public class CityController {
     @Operation(
             operationId = "GetAllCities",
             summary = "Get all cities",
-            description = "Retrieve a list of all cities in the system. Only accessible by users with ADMIN role.",
+            description = "Retrieve a list of all cities in the system.",
+            security = @SecurityRequirement(name = ""),
             responses = {
                     @ApiResponse(
                             responseCode = "200",
@@ -89,14 +91,6 @@ public class CityController {
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(implementation = CityResponse.class, type = "array")
-                            )
-                    ),
-                    @ApiResponse(
-                            responseCode = "403",
-                            description = "Forbidden - User does not have ADMIN role",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(type = "string", example = "Access denied")
                             )
                     ),
                     @ApiResponse(

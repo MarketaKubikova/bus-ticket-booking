@@ -49,6 +49,7 @@ public class SecurityConfig {
                                     .requestMatchers((HttpMethod.GET), "/api/v1/scheduled-trips/search").permitAll()
                                     .requestMatchers(HttpMethod.GET, "/api/v1/seats/**").permitAll()
                                     .requestMatchers(HttpMethod.POST, "/api/v1/pay").permitAll()
+                                    .requestMatchers(HttpMethod.GET, "/api/v1/cities").permitAll()
                                     .anyRequest().authenticated();
                         }
                 )

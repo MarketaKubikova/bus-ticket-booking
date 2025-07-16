@@ -34,9 +34,11 @@ public class CityService {
         List<City> cities = cityRepository.findAll();
 
         if (cities.isEmpty()) {
+            log.error("No cities found");
             throw new NotFoundException("No city found");
         }
 
+        log.info("Found {} cities", cities.size());
         return cities.stream()
                 .map(cityMapper::toResponseDto)
                 .toList();

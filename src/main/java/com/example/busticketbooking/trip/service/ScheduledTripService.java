@@ -48,6 +48,7 @@ public class ScheduledTripService {
             throw new NotFoundException("No scheduled trips found from " + origin + " to " + destination + " on " + date);
         }
 
+        log.info("Found {} scheduled trips from {} to {} on {}", foundTrips.size(), origin, destination, date);
         return foundTrips.stream()
                 .map(entity -> new ScheduledTripResponse(
                         entity.getBus().getBusNumber(),
