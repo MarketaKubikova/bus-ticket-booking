@@ -332,8 +332,7 @@ paths:
       tags:
         - City Management
       summary: Get all cities
-      description: Retrieve a list of all cities in the system. Only accessible by
-        users with ADMIN role.
+      description: Retrieve a list of all cities in the system.
       operationId: GetAllCities
       responses:
         "200":
@@ -343,13 +342,6 @@ paths:
               schema:
                 type: array
                 $ref: "#/components/schemas/CityResponse"
-        "403":
-          description: Forbidden - User does not have ADMIN role
-          content:
-            application/json:
-              schema:
-                type: string
-                example: Access denied
         "404":
           description: No cities found
           content:
