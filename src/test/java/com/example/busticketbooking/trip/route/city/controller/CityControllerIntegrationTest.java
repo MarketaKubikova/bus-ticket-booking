@@ -101,8 +101,13 @@ class CityControllerIntegrationTest {
 
     @Test
     @WithMockUser(username = "user")
-    void getAllCities_withoutAdminRole_shouldReturnForbidden() throws Exception {
+    void getAllCities_withoutAdminRole_shouldReturnCityList() throws Exception {
+        when(cityService.getAllCities()).thenReturn(List.of(new CityResponse("New York"), new CityResponse("Los Angeles")));
+
         mockMvc.perform(get(BASE_URL))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].name").value("New York"))
+                .andExpect(jsonPath("$[1].name").value("Los Angeles"));
     }
 }
